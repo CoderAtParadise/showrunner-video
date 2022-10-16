@@ -4,7 +4,6 @@ import {
   BaseClockConfig,
   ClockIdentifier,
   IClockSource,
-  ControlBar,
   FrameRate,
   MessageClockCurrent,
   MessageClockData,
@@ -82,15 +81,6 @@ export class AmpCurrentCtrlClock implements IClockSource<unknown> {
       if (clock) return clock.isOverrun();
     }
     return false;
-  }
-
-  controlBar(): ControlBar[] {
-    return [
-      ControlBar.PLAY_PAUSE,
-      ControlBar.STOP,
-      ControlBar.RECUE,
-      ControlBar.POSITION,
-    ];
   }
 
   name(): string {

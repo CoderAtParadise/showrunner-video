@@ -7,7 +7,6 @@ import {
   SMPTE,
   ClockStatus,
   ClockIdentifier,
-  ControlBar,
   FrameRate,
   MessageClockCurrent,
   MessageClockConfig,
@@ -45,15 +44,6 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
 
   isOverrun(): boolean {
     return false;
-  }
-
-  controlBar(): ControlBar[] {
-    return [
-      ControlBar.PLAY_PAUSE,
-      ControlBar.STOP,
-      ControlBar.RECUE,
-      ControlBar.POSITION,
-    ];
   }
 
   identifier(): ClockIdentifier {

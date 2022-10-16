@@ -2,8 +2,6 @@ import { TRPCError } from "@trpc/server";
 import {
   IClockManager,
   ClockLookup,
-  ClockStatus,
-  ControlBar,
   MessageClockData,
   MessageClockCurrent,
   IClockSource,
@@ -18,21 +16,8 @@ import { z } from "zod";
 import { observable } from "@trpc/server/observable";
 //@ts-ignore
 import { codec } from "@coderatparadise/showrunner-network";
-
-export type CurrentClockState = {
-  time: string;
-  status: ClockStatus;
-  overrun: boolean;
-  incorrectFrameRate: boolean;
-};
-
-export type AdditionalData = {
-  data: object;
-  duration: string;
-  frameRate: number;
-  name: string;
-  controlBar: ControlBar[];
-};
+//@ts-ignore
+import { Codec } from "@coderatparadise/showrunner-time";
 
 export function getClockRouter(
   // eslint-disable-next-line no-unused-vars
@@ -165,11 +150,11 @@ export function getClockRouter(
           code: "NOT_FOUND",
           message: `Failed to find a clock with id: ${input}`,
         });
-      return observable<AdditionalData>((emit) => {
+      return observable<Codec.AdditionalData>((emit) => {
         const onUpdate = () => {
           const data = (
             codec.getCodec("sync_clock_data") as codec.Codec<IClockSource>
-          ).serialize(clock) as AdditionalData;
+          ).serialize(clock) as Codec.AdditionalData;
           emit.next(data);
         };
         onUpdate();
@@ -200,11 +185,11 @@ export function getClockRouter(
             code: "NOT_FOUND",
             message: `Failed to find a clock with id: ${input}`,
           });
-        return observable<CurrentClockState>((emit) => {
+        return observable<Codec.CurrentClockState>((emit) => {
           const onUpdate = () => {
             const data = (
               codec.getCodec("sync_clock_current") as codec.Codec<IClockSource>
-            ).serialize(clock) as CurrentClockState;
+            ).serialize(clock) as Codec.CurrentClockState;
             emit.next(data);
           };
           onUpdate();
