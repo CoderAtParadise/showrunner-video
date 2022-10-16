@@ -1,0 +1,37 @@
+.container {
+  position: relative;
+  border: solid 5px;
+  border-radius: 0.5em;
+  border-color: #999999;
+  width: 200px;
+  height: 100px;
+  margin: auto;
+  padding: 1%;
+}
+
+.container[data-controlmode="automation"] {
+  border-color: #363636;
+}
+
+.container[data-cued="true"] {
+  border-color: #fbb03b;
+}
+
+
+.container:hover:not([data-controlmode="automation"]) {
+  cursor: pointer;
+}
+
+.duration {
+  position: absolute;
+  background-color: #000000;
+  line-height: 1em;
+  margin: 0;
+  bottom: 4%;
+  right: 1%;
+}
+
+.fileName {
+  line-height: 1em;
+  user-select: none;
+}

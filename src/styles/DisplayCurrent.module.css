@@ -1,0 +1,145 @@
+.filename {
+  width: 100%;
+  text-align: center;
+  user-select: none;
+}
+
+.container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slider {
+  height: 10%;
+  text-align: center;
+}
+
+.control {
+  display: grid;
+  height: 10%;
+  width: 90%;
+  grid-row-gap: 10px;
+  grid-template-rows: 0.8fr 0.8fr;
+  margin-left: auto;
+  margin-right: auto;
+  align-content: center;
+  text-align: center;
+}
+
+.playback {
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: 10px;
+  grid-template-columns: 1fr 2fr 1fr;
+}
+
+.rehearsalcontrols {
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: 5px;
+  grid-template-columns: 1.5fr 1fr 1.5fr 1fr;
+}
+
+.playback > *,
+.playbackmode > *,
+.rehearsalcontrols > * {
+  border: solid 5px;
+  border-radius: 0.5em;
+  border-color: #999999;
+}
+
+.playback > *:hover,
+.playbackmode > *:hover,
+.rehearsalcontrols > *:hover {
+  cursor: pointer;
+  background-color: #797777;
+}
+
+.playback > *:active,
+.playbackmode > *:active,
+.rehearsalcontrols > *:active {
+  background-color: #bdbbbb;
+}
+
+.playContainer {
+  line-height: 0.1em;
+}
+
+.play {
+  display: grid;
+  grid-column-gap: 0px;
+  grid-template-columns: 2fr 1fr;
+  font-size: 2em;
+  font-weight: bolder;
+  width: 70%;
+  place-items: center;
+  margin: auto;
+}
+
+.pause {
+  display: grid;
+  padding: 10px;
+}
+
+.skipPrevious {
+  display: grid;
+  padding: 10px;
+}
+
+.fastForward {
+  display: grid;
+  width: 80%;
+  grid-auto-columns: 10px;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  margin: auto;
+  font-size: 1.5em;
+  font-weight: bolder;
+}
+
+.icon {
+  margin: auto;
+  transform: scale(2);
+}
+
+.seek {
+  width: 90%;
+  margin: auto;
+  text-align: center;
+  user-select: none;
+  padding-bottom: 5px;
+}
+
+.onaircontainer {
+  display: grid;
+  height: 10%;
+  width: 50%;
+  grid-row-gap: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  align-content: center;
+  text-align: center;
+  background-color: #ff0000;
+  border-radius: 1.5em;
+}
+
+.onair {
+  display: grid;
+  width: 80%;
+  grid-auto-columns: 5px;
+  grid-template-columns: 0.8fr 1fr;
+  place-items: center;
+  margin: auto;
+  font-size: 1.5em;
+  font-weight: bolder;
+  user-select: none;
+}
+
+.playbackmode {
+  display: grid;
+  width: 60%;
+  grid-template-columns: 1fr 2fr;
+  grid-column-gap: 10px;
+  margin: auto;
+  user-select: none;
+}

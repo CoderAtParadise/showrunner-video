@@ -1,0 +1,107 @@
+.container {
+  background-color: #4d4d4d;
+  margin: 10px auto 10px auto;
+  width: 30%;
+  height: calc(100vh - 20px);
+  min-width: 450px;
+  max-width: 450px;
+  min-height: calc(100vh - 20px);
+  max-height: calc(100vh - 20px);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: 1em;
+  border-radius: 0.8em;
+  /* position: relative; */
+  overflow: hidden;
+}
+
+.container[data-controlmode="automation"] {
+  background-color: #202020;
+}
+
+.status {
+  user-select: none;
+  width: 30%;
+  margin-left: auto;
+  margin-right: auto;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  border-radius: 1em;
+  text-align: center;
+}
+
+.status[data-controlmode="rehearsal"] {
+  background-color: #ff0000;
+}
+
+.status[data-controlmode="playback"] {
+  background-color: #ff931e;
+}
+
+.status[data-controlmode="automation"] {
+  background-color: #2da7ff;
+}
+
+.videos {
+  margin: auto;
+  width: 60%;
+  height: 60%;
+}
+
+@media screen and (max-height: 670px) {
+  .videos {
+    height: 45%;
+  }
+}
+
+.scrollable {
+  height: 100%;
+}
+
+.lockedContainer {
+  position: absolute;
+  border: solid 5px;
+  border-radius: 1.2em;
+  right: 3%;
+  bottom: 2%;
+  width: 60px;
+  height: 60px;
+  padding: auto;
+  background-color: #000000;
+}
+
+.lockedContainer[data-locked="rehearsal"] {
+  display: none;
+}
+
+.locked {
+  display: grid;
+  padding: 10px;
+}
+
+.remote {
+  display: none;
+  position: absolute;
+  left: 2%;
+  bottom: 2%;
+  width: 80px;
+  line-height: 1em;
+  /* margin-left: 20px; */
+  background-color: #000000;
+  padding-left: 12px;
+  text-align: center;
+  justify-content: center;
+  list-style: none;
+}
+
+.list {
+  list-style: none;
+}
+
+.bullet::before {
+  content: "\2022"; /* Add content: \2022 is the CSS Code/unicode for a bullet */
+  color: #00ff00; /* Change the color */
+  font-weight: bolder; /* If you want it to be bold */
+  width: 0.5em; /* Also needed for space (tweak if needed) */
+  margin-left: -1em; /* Also needed for space (tweak if needed) */
+}

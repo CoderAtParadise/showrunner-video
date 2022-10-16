@@ -1,0 +1,15 @@
+{
+  "channel": "<identifier>",
+  "name": "<name>",
+  "frameRate": 25,
+  "connections": [
+    {
+      "type": "amp",
+      "address": "<address>",
+      "port": 2250,
+      "channel": "<channel_id>",
+      "timeBetweenRetries": [10000],
+      "maxRetries": 10
+    }
+  ]
+}

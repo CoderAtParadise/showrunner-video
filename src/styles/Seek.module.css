@@ -1,0 +1,46 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  width: 90%;
+  text-align: center;
+  user-select: none;
+}
+
+.time {
+  font-weight: bold;
+}
+
+.progressContainer {
+  height: 10px;
+  width: 100%;
+}
+
+.progressEmpty,
+.progressComplete {
+  height: inherit;
+  border-radius: 0.8em;
+  margin: auto;
+}
+
+.progressEmpty {
+  position: relative;
+  width: 90%;
+  background-color: #ffffff;
+  text-align: left;
+  overflow: hidden;
+}
+
+.progressComplete {
+  background-color: #fbb03b;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.position {
+  position: absolute;
+  aspect-ratio: 1/1;
+  width: 10px;
+  /* top:50%; */
+  background-color: red;
+  border-radius: 50%;
+}
