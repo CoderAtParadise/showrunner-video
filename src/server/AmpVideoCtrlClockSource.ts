@@ -231,8 +231,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         byteCount: "4",
         data: { timecode: time.toString() },
       });
-      if (stime.code === Return.ACK.code)
+      if (stime.code === Return.ACK.code) {
+        this.m_status = ClockStatus.PAUSED;
         return await AsyncUtils.booleanReturn(true);
+      }
     }
     return await AsyncUtils.booleanReturn(false);
   }

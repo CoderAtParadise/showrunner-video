@@ -13,34 +13,67 @@
 .progressContainer {
   height: 10px;
   width: 100%;
+  position: relative;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.progressContainer:hover {
+  cursor: pointer;
 }
 
 .progressEmpty,
 .progressComplete {
-  height: inherit;
+  height: 10px;
   border-radius: 0.8em;
-  margin: auto;
 }
 
 .progressEmpty {
   position: relative;
   width: 90%;
   background-color: #ffffff;
-  text-align: left;
   overflow: hidden;
+  margin: auto;
 }
 
 .progressComplete {
   background-color: #fbb03b;
   margin-left: 0;
-  margin-right: 0;
+  text-align: left;
 }
 
 .position {
   position: absolute;
+  height:10px;
+  top: 0px;
+  width: 60px;
+  visibility: show;
+  margin:auto;
+}
+
+.position[data-hovering="false"] {
+  visibility: hidden;
+}
+
+.seek {
+  position: relative;
   aspect-ratio: 1/1;
-  width: 10px;
+  width: 20px;
   /* top:50%; */
-  background-color: red;
+  background-color: #fbb03b;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #ffffff;
+  top: -5px;
   border-radius: 50%;
+}
+
+.seekTime {
+  position: relative;
+  width: 60px;
+  z-index: 10;
+  opacity: 1;
+  left: -20px;
+  top: -60px;
+  color: #fbb03b;
 }

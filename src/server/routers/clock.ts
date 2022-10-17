@@ -9,6 +9,7 @@ import {
   MessageClockList,
   BaseClockConfig,
   SMPTE,
+  ClockStatus,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { trpc } from "../trpc";
@@ -132,10 +133,18 @@ export function getClockRouter(
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        return await _manager.setTime(
-          input.lookup as ClockLookup,
-          new SMPTE(input.time)
-        );
+        const clock = await _manager.request(input.lookup as ClockLookup);
+        if (clock?.status() === ClockStatus.RUNNING) {
+          const timeSet = await _manager.setTime(
+            input.lookup as ClockLookup,
+            new SMPTE(input.time)
+          );
+          if (timeSet) return await _manager.play(input.lookup as ClockLookup);
+        }
+          return await _manager.setTime(
+            input.lookup as ClockLookup,
+            new SMPTE(input.time)
+          );
       }),
     data: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
       const _manager = await manager(input as ClockLookup);

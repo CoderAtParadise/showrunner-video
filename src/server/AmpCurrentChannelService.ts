@@ -132,7 +132,15 @@ export class AmpChannelService implements Service<AmpChannel> {
         this.m_current.id = currentId;
       }
       const rawTimecode = (cTime.data as { timecode: string }).timecode;
-      const currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
+      let currentTime: SMPTE = new SMPTE(0, this.m_manager.frameRate());
+      try {
+        currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
+      } catch (err) {
+        //Log and ignore invalid timecode as it isn't really needed
+        console.log("Encountered an invalid timecode.");
+        //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
+        return;
+      }
       if (this.m_lastChange === -1) this.m_lastChange = Date.now();
       const vdata = this.data("cache", this.m_current.id) as AmpVideoData;
       if (vdata !== undefined) {
@@ -141,7 +149,7 @@ export class AmpChannelService implements Service<AmpChannel> {
           this.m_lastChange = Date.now();
         } else if (
           this.m_current.raw === rawTimecode &&
-          Date.now() - this.m_lastChange > 1000 / this.m_manager.frameRate()
+          Date.now() - this.m_lastChange > 1000
         ) {
           if (vdata.status !== ClockStatus.UNCUED) {
             vdata.status = ClockStatus.PAUSED;
@@ -160,6 +168,7 @@ export class AmpChannelService implements Service<AmpChannel> {
     } else {
       this.m_current.id = "";
       this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
+      this.m_current.raw = "";
     }
     return await AsyncUtils.voidReturn();
   }
@@ -267,7 +276,7 @@ export class AmpChannelService implements Service<AmpChannel> {
     }, 1000);
     setInterval(() => {
       if (this.isOpen()) void this.pollCurrentInfo();
-    }, 1000 / 30);
+    }, 1000 / this.m_manager.frameRate());
   }
 
   private m_id: string;

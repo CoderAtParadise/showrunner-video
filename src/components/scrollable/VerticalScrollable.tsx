@@ -101,7 +101,6 @@ export const VerticalScrollable = (props: {
   useEffect(() => {
     const scrollHostElement = scrollHostRef.current;
     const { clientHeight, scrollHeight } = scrollHostElement as HTMLDivElement;
-    console.log(clientHeight);  
     const scrollBoxPercentage =
       scrollHeight !== 0 ? clientHeight / scrollHeight : 0;
     const scrollbarHeight = Math.max(
