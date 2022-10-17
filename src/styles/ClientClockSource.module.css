@@ -17,13 +17,9 @@
   border-color: #fbb03b;
 }
 
-.container:hover:not([data-cued="true"]) {
+.container:hover:not([data-cued="true"]):not([data-controlmode="automation"]) {
   cursor: pointer;
   background-color: #636363;
-}
-
-.container:hover([data-controlmode="automation"]) {
-  cursor: default;
 }
 
 .duration {
