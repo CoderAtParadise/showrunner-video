@@ -30,7 +30,6 @@ import {
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
 import { Component } from "react";
-import Star from "@mui/icons-material/Star";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { ClientManagerComponent } from "./ClientManagerComponent";
