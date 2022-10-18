@@ -1,6 +1,5 @@
 import type { AppRouter } from "server/routers/app.js";
 import {
-  createTRPCReact,
   createWSClient,
   httpBatchLink,
   httpLink,
@@ -29,7 +28,6 @@ export function getEndingLink() {
   return wsLink<AppRouter>({ client });
 }
 
-export const trpc = createTRPCReact<AppRouter>();
 export const trpcClient = createTRPCProxyClient<AppRouter>({
   links: [getEndingLink()],
 });
