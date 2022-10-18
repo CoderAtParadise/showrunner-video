@@ -30,7 +30,6 @@ import {
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
 import { Component } from "react";
-import Pause from "@mui/icons-material/Pause";
 import Star from "@mui/icons-material/Star";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
@@ -125,6 +124,28 @@ export class DisplayCurrentControlComponent
                       className={styles.arrowContainer}
                       onClick={() => {
                         this.setTime(
+                          this.current().subtract(
+                            new SMPTE("00:00:15:00"),
+                            true
+                          )
+                        );
+                      }}
+                    >
+                      <div className={styles.fastForward}>
+                        <Image
+                          src="/fast_rewind.svg"
+                          alt="Fast Rewind"
+                          width={48}
+                          height={48}
+                          style={{ transform: "scale(1.4)" }}
+                        />
+                        <p>15</p>
+                      </div>
+                    </div>
+                    <div
+                      className={styles.arrowContainer}
+                      onClick={() => {
+                        this.setTime(
                           this.current().add(new SMPTE("00:00:15:00"), true)
                         );
                       }}
@@ -141,7 +162,13 @@ export class DisplayCurrentControlComponent
                       </div>
                     </div>
                     <div className={styles.pause}>
-                      <Star className={styles.icon} />
+                    <Image
+                          src="/star.svg"
+                          alt="Set Out"
+                          width={48}
+                          height={48}
+                          style={{ transform: "scale(1.1)" }}
+                        />
                     </div>
                     <div
                       className={styles.arrowContainer}
@@ -164,9 +191,6 @@ export class DisplayCurrentControlComponent
                           style={{ transform: "scale(1.4)" }}
                         />
                       </div>
-                    </div>
-                    <div className={styles.pause}>
-                      <Pause className={styles.icon} />
                     </div>
                   </div>
                 </div>

@@ -29,6 +29,7 @@
   margin: 0;
   bottom: 4%;
   right: 1%;
+  user-select: none;
 }
 
 .fileName {

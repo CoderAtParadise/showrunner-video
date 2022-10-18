@@ -1,13 +1,13 @@
 import type { AppRouter } from "server/routers/app.js";
 import {
+  createTRPCProxyClient,
   createWSClient,
   httpBatchLink,
   httpLink,
   Operation,
   splitLink,
   wsLink,
-} from "@trpc/react";
-import {createTRPCProxyClient} from "@trpc/client";
+} from "@trpc/client";
 
 export function getEndingLink() {
   if (typeof window === `undefined`) {
