@@ -137,7 +137,7 @@ export class AmpChannelService implements Service<AmpChannel> {
         currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
       } catch (err) {
         //Log and ignore invalid timecode as it isn't really needed
-        console.log("Encountered an invalid timecode.");
+        console.log(`Encountered an invalid timecode.:${rawTimecode}`);
         //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
         return;
       }
@@ -149,7 +149,7 @@ export class AmpChannelService implements Service<AmpChannel> {
           this.m_lastChange = Date.now();
         } else if (
           this.m_current.raw === rawTimecode &&
-          Date.now() - this.m_lastChange > 1000
+          Date.now() - this.m_lastChange > 1100 / this.m_manager.frameRate()
         ) {
           if (vdata.status !== ClockStatus.UNCUED) {
             vdata.status = ClockStatus.PAUSED;
@@ -244,12 +244,20 @@ export class AmpChannelService implements Service<AmpChannel> {
       if (allVideos.length > 0) {
         for (const id of allVideos) {
           const timecode = await getDuration(id);
-          const duration = new SMPTE(timecode, this.m_manager.frameRate());
-          const meta = extractMetadata(id, duration);
+          let duration: SMPTE;
+          try {
+            duration = new SMPTE(timecode, this.m_manager.frameRate());
+          } catch (e) {
+            //Log and ignore invalid timecode as it isn't really needed
+            console.log(`Encountered an invalid timecode.:${timecode}`);
+            //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
+            return;
+          }
+          const meta = extractMetadata(id, duration!);
           if (!this.m_videoCache.has(meta.id)) {
             this.m_videoCache.set(meta.id, {
               ...meta,
-              incorrectFramerate: duration.hasIncorrectFrameRate(),
+              incorrectFramerate: duration!.hasIncorrectFrameRate(),
               status: ClockStatus.UNCUED,
             });
             this.m_manager.add(
