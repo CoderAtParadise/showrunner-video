@@ -98,7 +98,7 @@ export const VerticalScrollable = (props: {
   }, [scrollBoxHeight]);
 
   const scrollHostRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  const setScrollHeight = useCallback(() => {
     const scrollHostElement = scrollHostRef.current;
     const { clientHeight, scrollHeight } = scrollHostElement as HTMLDivElement;
     const scrollBoxPercentage =
@@ -108,11 +108,17 @@ export const VerticalScrollable = (props: {
       SCROLL_BOX_MIN_HEIGHT
     );
     setScrollBoxHeight(scrollbarHeight);
+  }, []);
+  useEffect(() => {
+    setScrollHeight();
+    const scrollHostElement = scrollHostRef.current;
+    window.addEventListener("resize", setScrollHeight, true);
     scrollHostElement?.addEventListener("scroll", handleScroll, true);
     return () => {
+      window.removeEventListener("resize", setScrollHeight, true);
       scrollHostElement?.removeEventListener("scroll", handleScroll, true);
     };
-  }, [handleScroll, props.children]);
+  }, [handleScroll, props.children, setScrollHeight]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleDocumentMouseMove);

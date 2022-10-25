@@ -19,6 +19,10 @@
   background-color: #202020;
 }
 
+.control {
+  height: 287px;
+}
+
 .status {
   user-select: none;
   width: 30%;
@@ -45,13 +49,8 @@
 .videos {
   margin: auto;
   width: 60%;
-  height: 60%;
-}
-
-@media screen and (max-height: 670px) {
-  .videos {
-    height: 45%;
-  }
+  height: calc(100% - 287px - max(5%,50px));
+  max-height: calc(100% - 287px - - max(5%,50px));
 }
 
 .scrollable {

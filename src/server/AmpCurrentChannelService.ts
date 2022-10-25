@@ -136,10 +136,19 @@ export class AmpChannelService implements Service<AmpChannel> {
       try {
         currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
       } catch (err) {
-        //Log and ignore invalid timecode as it isn't really needed
-        console.log(`Encountered an invalid timecode.:${rawTimecode}`);
-        //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
-        return;
+        const date = new Date();
+            const time =
+              date.getHours() +
+              ":" +
+              date.getMinutes() +
+              ":" +
+              date.getSeconds();
+            //Log and ignore invalid timecode as it isn't really needed
+            console.log(
+              `Encountered an invalid timecode.:${rawTimecode} at ${time}`
+            );
+            //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
+            return;
       }
       if (this.m_lastChange === -1) this.m_lastChange = Date.now();
       const vdata = this.data("cache", this.m_current.id) as AmpVideoData;
@@ -248,8 +257,17 @@ export class AmpChannelService implements Service<AmpChannel> {
           try {
             duration = new SMPTE(timecode, this.m_manager.frameRate());
           } catch (e) {
+            const date = new Date();
+            const time =
+              date.getHours() +
+              ":" +
+              date.getMinutes() +
+              ":" +
+              date.getSeconds();
             //Log and ignore invalid timecode as it isn't really needed
-            console.log(`Encountered an invalid timecode.:${timecode}`);
+            console.log(
+              `Encountered an invalid timecode.:${timecode} at ${time}`
+            );
             //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
             return;
           }
