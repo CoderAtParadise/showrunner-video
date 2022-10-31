@@ -7,8 +7,10 @@ export type AmpMetadata = {
 };
 
 export function extractId(ampid: string) {
-  const [, name, meta] = ampid.split(/([A-Za-z0-9_,()'`!;{}$@%#+=. -]+)(?:\[(.*)\])?/);
-  const id = stripSpaces(name.toLowerCase());
+  const [, name, meta] = ampid.split(
+    /([A-Za-z0-9_,()'`!;{}$@%#+=. -]+)(?:\[(.*)\])?/
+  );
+  const id = cleanId(name.toLowerCase());
   return [id, name, meta];
 }
 
@@ -48,6 +50,6 @@ function extractInMetadata(metadata: string): [boolean, SMPTE?] {
   return [false];
 }
 
-function stripSpaces(s: string): string {
-  return s.replace(/\s+/g, "");
+function cleanId(s: string): string {
+  return s.replace(/[ ,'-.]+/g, "");
 }

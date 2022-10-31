@@ -141,10 +141,10 @@ export function getClockRouter(
           );
           if (timeSet) return await _manager.play(input.lookup as ClockLookup);
         }
-          return await _manager.setTime(
-            input.lookup as ClockLookup,
-            new SMPTE(input.time)
-          );
+        return await _manager.setTime(
+          input.lookup as ClockLookup,
+          new SMPTE(input.time)
+        );
       }),
     data: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
       const _manager = await manager(input as ClockLookup);

@@ -1,10 +1,9 @@
 //@ts-ignore
 import { IClockSource, SMPTE } from "@coderatparadise/showrunner-time";
 //@ts-ignore
-import { DisplayTimeComponent } from "@coderatparadise/showrunner-time/extension";
+import { CurrentDurationComponent,SMPTEComponent } from "@coderatparadise/showrunner-time/extension";
 import { useCallback, useState, MouseEvent, useRef } from "react";
 import styles from "styles/Seek.module.css";
-import { SMPTEDisplayComponent } from "./SeekTimeComponent";
 
 export const SeekBarComponent = (props: {
   className?: string;
@@ -46,7 +45,7 @@ export const SeekBarComponent = (props: {
 
   return (
     <div className={`${props.className} ${styles.container}`}>
-      <DisplayTimeComponent
+      <CurrentDurationComponent
         clock={props.clock}
         show="current"
         className={`${styles.time}`}
@@ -75,13 +74,13 @@ export const SeekBarComponent = (props: {
           data-hovering={isHovering}
         >
           <div className={styles.seek} />
-          <SMPTEDisplayComponent
+          <SMPTEComponent
             className={styles.seekTime}
             time={new SMPTE(hoverTime, props.clock.frameRate())}
           />
         </span>
       </div>
-      <DisplayTimeComponent
+      <CurrentDurationComponent
         clock={props.clock}
         show="duration"
         className={`${props.className} ${styles.time}`}

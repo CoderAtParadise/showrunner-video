@@ -4,7 +4,8 @@ const nextConfig = {
     webPort: process.env.webPort,
   },
   reactStrictMode: true,
-  swcMinify: true
+  swcMinify: true,
+  output: "standalone",
 };
 
 export default nextConfig;

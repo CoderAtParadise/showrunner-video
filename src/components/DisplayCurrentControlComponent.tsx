@@ -51,6 +51,7 @@ export class DisplayCurrentControlComponent
       currentState: undefined,
       config: undefined,
       additional: undefined,
+      scroll: false,
     };
     this.m_manager.add(this);
   }
@@ -59,10 +60,44 @@ export class DisplayCurrentControlComponent
     this._update();
   }
 
+  isEllipsisActive = (c) => {
+    return c.clientWidth < c.scrollWidth;
+  };
+
+  componentDidUpdate(
+    _prevProps: any,
+    prevState: Readonly<{ additional: AdditionalData | undefined }>
+  ) {
+    if (
+      (prevState.additional?.data as any)?.currentId !==
+      (this.state.additional?.data as any)?.currentId
+    ) {
+      const c = document.getElementsByClassName(
+        styles.filename
+      )[0] as HTMLDivElement;
+      const shouldScroll = this.isEllipsisActive(c);
+      console.log(shouldScroll);
+      this.setState({ scroll: shouldScroll });
+    }
+  }
+
   render() {
     return (
       <div className={styles.container}>
-        <p className={styles.filename}>{this.name()}</p>
+        <div className={styles.filename}>
+          <span className={`${styles.marquee} ${
+              this.state.scroll ? styles.scroll : ""
+            }`}>
+            {this.name()}
+          </span>
+          <span
+            className={`${styles.marquee2} ${
+              this.state.scroll ? styles.scroll : ""
+            }`}
+          >
+            {this.name()}
+          </span>
+        </div>
         <SeekBarComponent className={styles.seek} clock={this} />
         {(() => {
           switch ((this.m_manager as ClientManagerComponent).controlMode()) {
@@ -161,13 +196,13 @@ export class DisplayCurrentControlComponent
                       </div>
                     </div>
                     <div className={styles.pause}>
-                    <Image
-                          src="/star.svg"
-                          alt="Set Out"
-                          width={48}
-                          height={48}
-                          style={{ transform: "scale(1.1)" }}
-                        />
+                      <Image
+                        src="/star.svg"
+                        alt="Set Out"
+                        width={48}
+                        height={48}
+                        style={{ transform: "scale(1.1)" }}
+                      />
                     </div>
                     <div
                       className={styles.arrowContainer}
@@ -407,6 +442,7 @@ export class DisplayCurrentControlComponent
   }
 
   _syncData(data: AdditionalData): void {
+    data.data = JSON.parse(data.data as unknown as string);
     this.setState({ additional: data });
   }
 
@@ -432,5 +468,6 @@ export class DisplayCurrentControlComponent
     currentState: CurrentClockState | undefined;
     config: (BaseClockConfig & unknown) | undefined;
     additional: AdditionalData | undefined;
+    scroll: boolean;
   };
 }

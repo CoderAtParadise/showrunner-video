@@ -2,7 +2,7 @@
   "name": "@coderatparadise/showrunner-video",
   "version": "0.1.0",
   "description": "Showrunner video module",
-  "packageManager": "yarn@4.0.0-rc.22",
+  "packageManager": "yarn@4.0.0-rc.27",
   "private": true,
   "scripts": {
     "dev:wss": "yarn tsc -p tsconfig.server.json && yarn node ./dist/devServer.js",
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@coderatparadise/amp-grassvalley": "^2.1.6",
-    "@coderatparadise/showrunner-network": "^2.1.1",
-    "@coderatparadise/showrunner-time": "^0.2.1",
+    "@coderatparadise/showrunner-network": "^2.1.2",
+    "@coderatparadise/showrunner-time": "^0.2.3",
     "@trpc/client": "^10.0.0-proxy-beta.25",
     "@trpc/server": "^10.0.0-proxy-beta.25",
     "ip": "^1.1.8",

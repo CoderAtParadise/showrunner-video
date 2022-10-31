@@ -1,7 +1,42 @@
 .filename {
-  width: 100%;
+  width: 60%;
+  height: 1.3em;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
   text-align: center;
-  user-select: none;
+  justify-content: center;
+}
+
+.marquee,.marquee2 {
+  max-width: 100%;
+  width:fit-content;
+  height: 100%;
+  text-align: center;
+  animation: none;
+}
+
+.scroll {
+  position: absolute;
+  animation: slide 40s linear infinite;
+}
+
+:not(.scroll).marquee2 {
+  display: none;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-200%);
+  }
 }
 
 .container {

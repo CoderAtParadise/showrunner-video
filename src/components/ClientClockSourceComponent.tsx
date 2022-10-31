@@ -24,7 +24,7 @@ import {
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 //@ts-ignore
-import { DisplayTimeComponent } from "@coderatparadise/showrunner-time/extension";
+import { CurrentDurationComponent } from "@coderatparadise/showrunner-time/extension";
 import {
   AdditionalData,
   ClockIdentifierCodec,
@@ -70,7 +70,7 @@ export class ClientClockSourceComponent
         }}
       >
         <span className={styles.fileName}>{this.name()}</span>
-        <DisplayTimeComponent
+        <CurrentDurationComponent
           clock={this}
           show="duration"
           showFrames

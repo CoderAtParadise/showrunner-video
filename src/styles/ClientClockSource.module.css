@@ -22,6 +22,10 @@
   background-color: #636363;
 }
 
+.container:hover:not([data-cued="true"]):not([data-controlmode="automation"]) .fileName::after {
+  background-color: #636363;
+}
+
 .duration {
   position: absolute;
   background-color: #000000;
@@ -33,6 +37,33 @@
 }
 
 .fileName {
-  line-height: 1em;
+  display: inline-block;
+  line-height: 1.3em;
+  width: 90%;
   user-select: none;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-height: 2.6em;
+  position:relative;
+  text-align: left;
+  margin-right: -1em;
+  padding-right: -1em;
+  /* white-space: nowrap; */
+}
+
+.fileName:before {
+  content: "...";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.fileName:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 1em;
+  height: 1em;
+  margin-top:0.2em;
+  background-color: #4d4d4d;
 }

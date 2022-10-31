@@ -40,22 +40,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coderatparadise/showrunner-network@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@coderatparadise/showrunner-network@npm:2.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-network%2F2.1.1%2F5815909b95f9cc1e57b6de82ccf245e888d61e7a"
-  checksum: 185f0040e0233484a6a8ab0bdc1a0f16d0305f2cb281e15fc0db9b5dab6da2c528af2fd9970a0791aa21a09bcbb4875648bb28c73a8011c1e48f5a2f4aa0378b
+"@coderatparadise/showrunner-network@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@coderatparadise/showrunner-network@npm:2.1.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-network%2F2.1.2%2F5bedede53fa299919e653ebbfc77ff7fcd88ee6a"
+  checksum: 02a70e3d5f3ac6249ddc8eeede10485bcfee7bec3cf3335afa8000c568a69f1bd79174b9ef512dfdc13de812c5e4d960ee35b061b8021a6684c0fbbfe1a4577b
   languageName: node
   linkType: hard
 
-"@coderatparadise/showrunner-time@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@coderatparadise/showrunner-time@npm:0.2.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-time%2F0.2.1%2Fd233d96eccf1ee72f8bc57bf351ca7e53a690943"
+"@coderatparadise/showrunner-time@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@coderatparadise/showrunner-time@npm:0.2.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-time%2F0.2.3%2F53eda885746d508d3d1c20dd43d85e11386ea461"
   peerDependencies:
     "@coderatparadise/showrunner-network": ^2
     react: ^18
     react-dom: ^18
     zod: ^3
-  checksum: e9ab77045bbeeec5872707fb00b29400493401944f1449bced285e431215c4cc3ce6775eb6f6de8bd502c4263f7df8182c4869fa7013227e656cdae848247ac6
+  checksum: 004a948f8e0618e95ea039f5b810df59d1317ddcb81c0ca08650e81e38ce87340b5c8e58bfbecfbd315c64da456b2a41c80644e04f3bbf2fad9e7941498b1e64
   languageName: node
   linkType: hard
 
@@ -64,8 +64,8 @@ __metadata:
   resolution: "@coderatparadise/showrunner-video@workspace:."
   dependencies:
     "@coderatparadise/amp-grassvalley": "npm:^2.1.6"
-    "@coderatparadise/showrunner-network": "npm:^2.1.1"
-    "@coderatparadise/showrunner-time": "npm:^0.2.1"
+    "@coderatparadise/showrunner-network": "npm:^2.1.2"
+    "@coderatparadise/showrunner-time": "npm:^0.2.3"
     "@trpc/client": "npm:^10.0.0-proxy-beta.25"
     "@trpc/server": "npm:^10.0.0-proxy-beta.25"
     "@types/ip": "npm:^1.1.0"
@@ -3079,7 +3079,7 @@ __metadata:
 
 "resolve@patch:resolve@npm%3A^1.20.0#optional!builtin<compat/resolve>, resolve@patch:resolve@npm%3A^1.22.0#optional!builtin<compat/resolve>":
   version: 1.22.1
-  resolution: "resolve@patch:resolve@npm%3A1.22.1#optional!builtin<compat/resolve>::version=1.22.1&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A1.22.1#optional!builtin<compat/resolve>::version=1.22.1&hash=c3c19d"
   dependencies:
     is-core-module: "npm:^2.9.0"
     path-parse: "npm:^1.0.7"
@@ -3092,7 +3092,7 @@ __metadata:
 
 "resolve@patch:resolve@npm%3A^2.0.0-next.3#optional!builtin<compat/resolve>":
   version: 2.0.0-next.4
-  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.4#optional!builtin<compat/resolve>::version=2.0.0-next.4&hash=07638b"
+  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.4#optional!builtin<compat/resolve>::version=2.0.0-next.4&hash=c3c19d"
   dependencies:
     is-core-module: "npm:^2.9.0"
     path-parse: "npm:^1.0.7"
@@ -3471,7 +3471,7 @@ __metadata:
 
 "typescript@patch:typescript@npm%3A4.8.4#optional!builtin<compat/typescript>":
   version: 4.8.4
-  resolution: "typescript@patch:typescript@npm%3A4.8.4#optional!builtin<compat/typescript>::version=4.8.4&hash=701156"
+  resolution: "typescript@patch:typescript@npm%3A4.8.4#optional!builtin<compat/typescript>::version=4.8.4&hash=0102e9"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
