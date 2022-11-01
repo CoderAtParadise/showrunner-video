@@ -76,7 +76,6 @@ export class DisplayCurrentControlComponent
         styles.filename
       )[0] as HTMLDivElement;
       const shouldScroll = this.isEllipsisActive(c);
-      console.log(shouldScroll);
       this.setState({ scroll: shouldScroll });
     }
   }
@@ -88,13 +87,6 @@ export class DisplayCurrentControlComponent
           <span className={`${styles.marquee} ${
               this.state.scroll ? styles.scroll : ""
             }`}>
-            {this.name()}
-          </span>
-          <span
-            className={`${styles.marquee2} ${
-              this.state.scroll ? styles.scroll : ""
-            }`}
-          >
             {this.name()}
           </span>
         </div>

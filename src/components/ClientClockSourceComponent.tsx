@@ -63,13 +63,16 @@ export class ClientClockSourceComponent
     return (
       <div
         className={styles.container}
-        data-controlmode={(this.m_manager as ClientManagerComponent).controlMode()}
+        data-controlmode={(
+          this.m_manager as ClientManagerComponent
+        ).controlMode()}
         data-cued={this.status() !== ClockStatus.UNCUED}
         onClick={() => {
           this.cue();
         }}
       >
         <span className={styles.fileName}>{this.name()}</span>
+        <span className={styles.hovername}>{this.name()}</span>
         <CurrentDurationComponent
           clock={this}
           show="duration"

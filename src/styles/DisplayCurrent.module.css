@@ -13,9 +13,9 @@
   justify-content: center;
 }
 
-.marquee,.marquee2 {
+.marquee {
   max-width: 100%;
-  width:fit-content;
+  width: fit-content;
   height: 100%;
   text-align: center;
   animation: none;
@@ -23,11 +23,7 @@
 
 .scroll {
   position: absolute;
-  animation: slide 40s linear infinite;
-}
-
-:not(.scroll).marquee2 {
-  display: none;
+  animation: slide 25s linear infinite;
 }
 
 @keyframes slide {

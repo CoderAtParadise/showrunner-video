@@ -22,7 +22,8 @@
   background-color: #636363;
 }
 
-.container:hover:not([data-cued="true"]):not([data-controlmode="automation"]) .fileName::after {
+.container:hover:not([data-cued="true"]):not([data-controlmode="automation"])
+  .fileName::after {
   background-color: #636363;
 }
 
@@ -33,6 +34,7 @@
   margin: 0;
   bottom: 4%;
   right: 1%;
+  z-index: 0;
   user-select: none;
 }
 
@@ -44,7 +46,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   max-height: 2.6em;
-  position:relative;
+  position: relative;
   text-align: left;
   margin-right: -1em;
   padding-right: -1em;
@@ -64,6 +66,24 @@
   right: 0;
   width: 1em;
   height: 1em;
-  margin-top:0.2em;
+  margin-top: 0.2em;
   background-color: #4d4d4d;
+}
+
+.fileName:hover + .hovername {
+  display: block;
+}
+
+.hovername {
+  position: absolute;
+  width: fit-content;
+  line-height: 1.3em;
+  top: 20px;
+  left: 50px;
+  display: none;
+  background-color: #797777;
+  border-radius: 0.5em;
+  border: solid 5px;
+  border-color: #999999;
+  z-index: 2;
 }

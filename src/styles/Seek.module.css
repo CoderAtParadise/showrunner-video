@@ -71,7 +71,7 @@
 .seekTime {
   position: relative;
   width: 60px;
-  z-index: 10;
+  z-index: 1;
   opacity: 1;
   left: -20px;
   top: -60px;
