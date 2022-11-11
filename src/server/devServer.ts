@@ -2,7 +2,7 @@ import { createContext } from "./context.js";
 import { appRouter } from "./routers/app.js";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import ws from "ws";
-import { loadChannels } from "./ChannelLoader.js";
+import { loadChannels } from "./channel/ChannelLoader.js";
 //@ts-ignore
 import { Codec } from "@coderatparadise/showrunner-time";
 import EventEmitter from "events";

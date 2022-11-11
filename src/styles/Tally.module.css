@@ -1,0 +1,26 @@
+.tally {
+  user-select: none;
+  width: 30%;
+  margin-left: auto;
+  margin-right: auto;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  border-radius: 1em;
+  text-align: center;
+}
+
+.tally[data-tallyProgram="true"][data-tallyPreview="false"] {
+  background-color: #299100;
+}
+
+.tally[data-tallyProgram="false"][data-tallyPreview="true"] {
+  background-color: #55c1ff;
+}
+
+.tally[data-tallyProgram="true"][data-tallyPreview="true"] {
+  background-color: #ff0000;
+}
+
+.tally[data-tallyProgram="false"][data-tallyPreview="false"] {
+    background-color: #ff0000;
+  }

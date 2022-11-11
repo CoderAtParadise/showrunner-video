@@ -1,11 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { trpc } from "../trpc";
-import { getManager, listManagers, ManagerEvents } from "../ManagerRegistry";
-import { VideoManager } from "../VideoManager";
+import {
+  getManager,
+  listManagers,
+  ManagerEvents,
+} from "../channel/ManagerRegistry";
 import { z } from "zod";
-//@ts-ignore
-import { ControlMode } from "@coderatparadise/showrunner-time";
+import { VideoManager } from "server/channel/VideoManager";
 
 export const videoRouter = trpc.router({
   listManagers: trpc.procedure.subscription(() => {
@@ -44,40 +46,24 @@ export const videoRouter = trpc.router({
         });
       return manager.name();
     }),
-  controlMode: trpc.procedure
-    .input(z.string())
-    .subscription(async ({ input }) => {
-      const manager = await getManager(input);
-      if (!manager)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Failed to find manager`,
-        });
-      return observable<string>((emit) => {
-        const onControlModeChange = async (mId) => {
-          if (mId === input) {
-            emit.next(manager.controlMode() as string);
-          }
-        };
-        onControlModeChange(input);
-        ManagerEvents.addListener("manager.mode", onControlModeChange);
-
-        return () => {
-          ManagerEvents.removeListener("manager.mode", onControlModeChange);
-        };
+  tally: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
+    const manager = await getManager(input);
+    if (!manager)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Failed to find manager`,
       });
-    }),
-  setControlMode: trpc.procedure
-    .input(z.object({ id: z.string(), controlMode: z.string() }))
-    .mutation(async ({ input }) => {
-      const manager = await getManager(input.id);
-      if (!manager)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Failed to find manager`,
-        });
-      return await manager.setControlMode(input.controlMode as ControlMode);
-    }),
+    return observable<{ preview: boolean; program: boolean }>((emit) => {
+      const tally = async () => {
+        emit.next((manager as VideoManager).tally());
+      };
+      tally();
+      ManagerEvents.addListener("manager.tally", tally);
+      return () => {
+        ManagerEvents.removeListener("manager.tally", tally);
+      };
+    });
+  }),
 });
 
 export type VideoRouter = typeof videoRouter;

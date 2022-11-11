@@ -23,29 +23,6 @@
   height: 287px;
 }
 
-.status {
-  user-select: none;
-  width: 30%;
-  margin-left: auto;
-  margin-right: auto;
-  height: 1.5rem;
-  line-height: 1.5rem;
-  border-radius: 1em;
-  text-align: center;
-}
-
-.status[data-controlmode="rehearsal"] {
-  background-color: #ff0000;
-}
-
-.status[data-controlmode="playback"] {
-  background-color: #ff931e;
-}
-
-.status[data-controlmode="automation"] {
-  background-color: #2da7ff;
-}
-
 .videos {
   margin: auto;
   width: 60%;

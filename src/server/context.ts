@@ -3,7 +3,7 @@ import * as trpcNext from "@trpc/server/adapters/next";
 import { NodeHTTPCreateContextFnOptions } from "@trpc/server/adapters/node-http";
 import { IncomingMessage } from "http";
 import ws from "ws";
-import { getRegistry } from "./ManagerRegistry";
+import { getRegistry } from "./channel/ManagerRegistry";
 
 /**
  * Creates context for an incoming request

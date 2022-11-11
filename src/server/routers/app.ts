@@ -1,5 +1,5 @@
 import { trpc } from "../trpc";
-import { getManager } from "../ManagerRegistry";
+import { getManager } from "../channel/ManagerRegistry";
 import { videoRouter } from "./video";
 import { getClockRouter } from "./clock";
 import {

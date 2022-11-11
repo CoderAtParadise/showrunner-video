@@ -63,9 +63,12 @@ export class ClientClockSourceComponent
     return (
       <div
         className={styles.container}
-        data-controlmode={(
-          this.m_manager as ClientManagerComponent
-        ).controlMode()}
+        data-tallyPreview={
+          (this.m_manager as ClientManagerComponent).tally().preview
+        }
+        data-tallyProgram={
+          (this.m_manager as ClientManagerComponent).tally().program
+        }
         data-cued={this.status() !== ClockStatus.UNCUED}
         onClick={() => {
           this.cue();

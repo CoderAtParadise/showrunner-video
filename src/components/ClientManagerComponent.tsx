@@ -19,13 +19,11 @@ import {
   MessageClockStop,
   MessageClockUncue,
   SMPTE,
-  ControlMode,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { Component, Fragment, ReactElement } from "react";
 import { trpcClient } from "../utils/trpc";
 import Router from "next/router";
-import Image from "next/image";
 import {
   ClockConfigCodec,
   ClockCurrentStateCodec,
@@ -38,6 +36,7 @@ import { DisplayCurrentControlComponent } from "./DisplayCurrentControlComponent
 
 import styles from "../styles/Channel.module.css";
 import { VerticalScrollable } from "./scrollable/VerticalScrollable";
+import { TallyComponent } from "./TallyComponent";
 
 export class ClientManagerComponent
   extends Component<{ id: string; children?: ReactElement }>
@@ -69,9 +68,9 @@ export class ClientManagerComponent
         }
       );
       //@ts-ignore
-      await trpcClient.controlMode.subscribe(this.m_id, {
-        onData(mode: string) {
-          self.setState({ controlMode: mode as ControlMode });
+      trpcClient.tally.subscribe(this.m_id, {
+        onData(tally: { preview: boolean; program: boolean }) {
+          self.setState({ tally: tally });
         },
       });
     } catch (err) {
@@ -81,11 +80,13 @@ export class ClientManagerComponent
 
   render() {
     return (
-      <div className={styles.container} data-controlmode={this.controlMode()}>
+      <div
+        className={styles.container}
+        data-tallyPreview={this.tally().preview}
+        data-tallyProgram={this.tally().program}
+      >
         <div className={styles.control}>
-          <div className={styles.status} data-controlmode={this.controlMode()}>
-            <p>{this.name()}</p>
-          </div>
+          <TallyComponent tally={this.tally()} name={this.name()} />
           <DisplayCurrentControlComponent
             key={`video:video:${this.id()}:current:ampcurrentctrl`}
             id={`video:video:${this.id()}:current:ampcurrentctrl`}
@@ -110,21 +111,6 @@ export class ClientManagerComponent
           <li className={styles.bullet}>
             <span>REMOTE</span>
           </li>
-        </div>
-        <div
-          className={styles.lockedContainer}
-          data-locked={this.controlMode()}
-          onMouseUp={() => this.setState({ lockTime: 0 })}
-        >
-          <div className={styles.locked}>
-            <Image
-              src="/locked.svg"
-              alt="Locked"
-              width={48}
-              height={48}
-              style={{ transform: "scale(1.1,1.1)" }}
-            />
-          </div>
         </div>
       </div>
     );
@@ -204,6 +190,10 @@ export class ClientManagerComponent
 
   update(): void {
     // HOP;
+  }
+
+  tally(): { preview: boolean; program: boolean } {
+    return this.state.tally;
   }
 
   async dispatch(
@@ -331,27 +321,13 @@ export class ClientManagerComponent
   state: {
     name: string;
     videos: Map<ClockLookup, IClockSource<any> | undefined>;
-    controlMode: ControlMode;
+    tally: { preview: boolean; program: boolean };
     lockTime: number;
   } = {
     name: "",
     videos: new Map<ClockLookup, IClockSource<any> | undefined>(),
-    controlMode: ControlMode.Rehearsal,
+    tally: { preview: false, program: false },
     lockTime: 0,
   };
-
-  controlMode(): ControlMode {
-    // return ControlMode.Playback;
-    return this.state.controlMode;
-  }
-
-  async setControlMode(mode: ControlMode): Promise<boolean> {
-    //@ts-ignore
-    return await trpcClient.setControlMode.mutate({
-      id: this.m_id,
-      controlMode: mode,
-    });
-  }
-
   private m_id: string;
 }
