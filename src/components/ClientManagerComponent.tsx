@@ -37,6 +37,7 @@ import { DisplayCurrentControlComponent } from "./DisplayCurrentControlComponent
 import styles from "../styles/Channel.module.css";
 import { VerticalScrollable } from "./scrollable/VerticalScrollable";
 import { TallyComponent } from "./TallyComponent";
+import Image from "next/image";
 
 export class ClientManagerComponent
   extends Component<{ id: string; children?: ReactElement }>
@@ -69,7 +70,11 @@ export class ClientManagerComponent
       );
       //@ts-ignore
       trpcClient.tally.subscribe(this.m_id, {
-        onData(tally: { preview: boolean; program: boolean }) {
+        onData(tally: {
+          rehearsal: boolean;
+          preview: boolean;
+          program: boolean;
+        }) {
           self.setState({ tally: tally });
         },
       });
@@ -82,9 +87,42 @@ export class ClientManagerComponent
     return (
       <div
         className={styles.container}
-        data-tallyPreview={this.tally().preview}
-        data-tallyProgram={this.tally().program}
+        data-tallypreview={this.tally().preview}
+        data-tallyprogram={this.tally().program}
       >
+        <div className={styles.config}>
+          {this.tally().rehearsal ? (
+            <Image
+              src="/rehearsal_on.svg"
+              alt="Reheasal Mode On"
+              width={48}
+              height={48}
+              style={{ transform: "scale(0.4)" }}
+              onClick={() => {
+                //@ts-ignore
+                trpcClient.setRehearsalMode.mutate({
+                  identifier: this.id(),
+                  rehearsal: false,
+                });
+              }}
+            />
+          ) : (
+            <Image
+              src="/rehearsal_off.svg"
+              alt="Reheasal Mode On"
+              width={48}
+              height={48}
+              style={{ transform: "scale(0.4)" }}
+              onClick={() => {
+                //@ts-ignore
+                trpcClient.setRehearsalMode.mutate({
+                  identifier: this.id(),
+                  rehearsal: true,
+                });
+              }}
+            />
+          )}
+        </div>
         <div className={styles.control}>
           <TallyComponent tally={this.tally()} name={this.name()} />
           <DisplayCurrentControlComponent
@@ -192,7 +230,7 @@ export class ClientManagerComponent
     // HOP;
   }
 
-  tally(): { preview: boolean; program: boolean } {
+  tally(): { rehearsal: boolean; preview: boolean; program: boolean } {
     return this.state.tally;
   }
 
@@ -321,12 +359,12 @@ export class ClientManagerComponent
   state: {
     name: string;
     videos: Map<ClockLookup, IClockSource<any> | undefined>;
-    tally: { preview: boolean; program: boolean };
+    tally: { rehearsal: boolean; preview: boolean; program: boolean };
     lockTime: number;
   } = {
     name: "",
     videos: new Map<ClockLookup, IClockSource<any> | undefined>(),
-    tally: { preview: false, program: false },
+    tally: { rehearsal: true, preview: false, program: false },
     lockTime: 0,
   };
   private m_id: string;

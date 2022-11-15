@@ -14,6 +14,8 @@ import {
   AsyncUtils,
   DispatchInfo,
   DispatchReturn,
+  NetworkConnection,
+  Service,
   serviceManager,
   //@ts-ignore
 } from "@coderatparadise/showrunner-network";
@@ -21,7 +23,7 @@ import { VideoCtrlData } from "./VideoCtrlData";
 import { AmpChannelService, AmpVideoData } from "./amp/AmpChannelService";
 //@ts-ignore
 import { AmpCommand, CommandReturn } from "@coderatparadise/amp-grassvalley";
-import { Connection } from "./ChannelLoader";
+import { ManagerEvents } from "./ManagerRegistry";
 
 export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
   constructor(
@@ -127,36 +129,45 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     return this.m_settings.frameRate;
   }
 
-  addConnection(connection: Connection): void {
-    const index = this.m_connectionInfos.push(connection) - 1;
-    const channel = new AmpChannelService(
-      `${this.m_channel}_${index}`,
-      this,
-      connection
-    );
-    serviceManager.registerSource(channel);
-    this.m_connections.push(channel);
-    serviceManager.openSource(`amp:${this.m_channel}_${index}`);
+  addConnection(
+    type: string,
+    connection: Service<any, NetworkConnection>
+  ): void {
+    serviceManager.registerSource(connection as Service<any, unknown>);
+    if (this.connections(type) !== undefined)
+      this.connections(type)?.push(connection);
+    else this.m_connections.set(type, [connection]);
+    serviceManager.openSource(connection.identifier());
   }
 
-  async removeConnection(index: number): Promise<void> {
-    if (await this.m_connections.at(index)?.close()) {
-      this.m_connectionInfos.splice(index, 1);
-      this.m_connections.splice(index, 1);
-      serviceManager.removeSource(`${this.m_channel}_${index}`);
+  async removeConnection(type: string, index: number): Promise<void> {
+    const connections = this.connections(type);
+    if (connections) {
+      const connection = connections.at(index);
+      if (connection) {
+        if (await connection.close()) {
+          serviceManager.removeSource(connection.identifier());
+          connections.splice(index, 1);
+        }
+      }
     }
   }
 
-  connections(): Connection[] {
-    return this.m_connectionInfos;
+  connectionTypes(): string[] {
+    return Array.from(this.m_connections.keys());
   }
 
+  connections(type: string): Service<unknown, NetworkConnection>[] | undefined {
+    return this.m_connections.get(type);
+  }
+
+  // TODO overhaul to make more generic
   sendCommand(
     command: AmpCommand, // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data?: { byteCount?: string; commandCode?: string; data?: any }
   ): Promise<CommandReturn> {
     let ret: Promise<CommandReturn> | undefined = undefined;
-    for (const connection of this.m_connections) {
+    for (const connection of this.connections("amp") as AmpChannelService[]) {
       if (connection.isOpen()) {
         if (ret === undefined) {
           ret = connection.get().sendCommand(command, data);
@@ -172,24 +183,44 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     return ret;
   }
 
+  // TODO overhaul to make more generic
   cache(): Map<string, AmpVideoData> {
-    for (const connection of this.m_connections) {
+    for (const connection of this.connections("amp") as AmpChannelService[]) {
       if (connection.isOpen())
         return connection.data("cache") as Map<string, AmpVideoData>;
     }
     return new Map<string, AmpVideoData>();
   }
 
+  // TODO overhaul to make more generic
   current(): { id: string; time: SMPTE } {
-    for (const connection of this.m_connections) {
+    for (const connection of this.connections("amp") as AmpChannelService[]) {
       if (connection.isOpen())
         return connection.data("current") as { id: string; time: SMPTE };
     }
     return { id: "", time: new SMPTE() };
   }
 
-  tally(): { preview: boolean; program: boolean } {
-    return { preview: false, program: false };
+  setRehearsalMode(rehearsal: boolean): void {
+    this.m_tally.rehearsal = rehearsal;
+    ManagerEvents.emit("manager.tally");
+  }
+
+  tally(): { rehearsal: boolean; preview: boolean; program: boolean } {
+    return this.m_tally;
+  }
+
+  cueLock(owner: string, lock: boolean): boolean {
+    if (this.m_cueLock.locked && owner != this.m_cueLock.owner) return false;
+    if (lock) {
+      this.m_cueLock.locked = true;
+      this.m_cueLock.owner = owner;
+      return true;
+    } else {
+      this.m_cueLock.locked = false;
+      this.m_cueLock.owner = "";
+      return true;
+    }
   }
 
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
@@ -237,6 +268,12 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
   >();
   private m_eventHandler: EventEmitter = new EventEmitter();
   private m_settings: { name: string; frameRate: FrameRate };
-  private m_connectionInfos: Connection[] = [];
-  private m_connections: AmpChannelService[] = [];
+  private m_connections: Map<string, Service<unknown, NetworkConnection>[]> =
+    new Map<string, Service<unknown, NetworkConnection>[]>();
+  private m_tally: { rehearsal: boolean; preview: boolean; program: boolean } =
+    { rehearsal: true, preview: false, program: false };
+  private m_cueLock: { owner: string; locked: boolean } = {
+    owner: "",
+    locked: false,
+  };
 }

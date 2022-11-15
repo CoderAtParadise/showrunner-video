@@ -11,12 +11,22 @@
   padding-bottom: 10px;
   line-height: 1em;
   border-radius: 0.8em;
-  /* position: relative; */
   overflow: hidden;
+  position: relative;
 }
 
-.container[data-controlmode="automation"] {
+.container[data-tallyprogram="true"] {
   background-color: #202020;
+}
+
+.config {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+}
+
+.config img:hover {
+  cursor: pointer;
 }
 
 .control {

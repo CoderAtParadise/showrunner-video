@@ -9,7 +9,7 @@
   padding: 1%;
 }
 
-.container[data-tallyProgram="true"] {
+.container[data-tallyprogram="true"] {
   border-color: #363636;
 }
 
@@ -17,12 +17,12 @@
   border-color: #fbb03b;
 }
 
-.container:hover:not([data-cued="true"]):not([data-tallyProgram="true"]) {
+.container:hover:not([data-cued="true"]):not([data-tallyprogram="true"]) {
   cursor: pointer;
   background-color: #636363;
 }
 
-.container:hover:not([data-cued="true"]):not([data-tallyProgram="true"])
+.container:hover:not([data-cued="true"]):not([data-tallyprogram="true"])
   .fileName::after {
   background-color: #636363;
 }

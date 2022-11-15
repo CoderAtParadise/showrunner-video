@@ -20,7 +20,6 @@ import {
   MessageClockData,
   MessageClockCurrent,
   MessageClockConfig,
-  IClockManager,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import {
@@ -33,15 +32,16 @@ import { Component } from "react";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { SeekBarComponent } from "./seek/SeekBarComponent";
+import { ClientManagerComponent } from "./ClientManagerComponent";
 
 export class DisplayCurrentControlComponent
-  extends Component<{ id: ClockLookup; manager: IClockManager }>
+  extends Component<{ id: ClockLookup; manager: ClientManagerComponent }>
   implements IClockSource<unknown>
 {
   constructor(props: {
     className?: string;
     id: ClockLookup;
-    manager: IClockManager;
+    manager: ClientManagerComponent;
   }) {
     super(props);
     this.m_id = props.id;
@@ -79,6 +79,201 @@ export class DisplayCurrentControlComponent
     }
   }
 
+  rehearsal() {
+    return (
+      <div className={styles.control}>
+        <div className={styles.playback}>
+          <div
+            className={styles.skipPrevious}
+            title="Recue"
+            onClick={() => {
+              this.recue(false);
+            }}
+          >
+            <Image
+              src="/skip_previous.svg"
+              alt="Recue"
+              width={48}
+              height={48}
+              style={{ transform: "scale(0.9,1.2)" }}
+            />
+          </div>
+          <div
+            className={styles.playContainer}
+            onClick={() => {
+              this.play();
+            }}
+          >
+            <div className={styles.play} title="Play">
+              <p>PLAY</p>
+              <Image
+                src="/play.svg"
+                alt="Play"
+                width={48}
+                height={48}
+                style={{ transform: "scale(1.4)" }}
+              />
+            </div>
+          </div>
+          <div
+            className={styles.pause}
+            title="Pause"
+            onClick={() => {
+              this.pause(false);
+            }}
+          >
+            <Image
+              src="/pause.svg"
+              alt="Pause"
+              width={48}
+              height={48}
+              style={{ transform: "scale(0.9,1.2)" }}
+            />
+          </div>
+        </div>
+        <div className={styles.rehearsalcontrols}>
+          <div
+            className={styles.arrowContainer}
+            onClick={() => {
+              this.setTime(
+                this.current()
+                  .bound({
+                    lower: new SMPTE("00:00:00:00"),
+                    upper: this.duration(),
+                  })
+                  .subtract(new SMPTE("00:00:15:00"), true)
+              );
+            }}
+          >
+            <div className={styles.fastForward}>
+              <Image
+                src="/fast_rewind.svg"
+                alt="Fast Rewind"
+                width={48}
+                height={48}
+                style={{ transform: "scale(1.4)" }}
+              />
+              <p>15</p>
+            </div>
+          </div>
+          <div
+            className={styles.arrowContainer}
+            onClick={() => {
+              this.setTime(
+                this.current()
+                  .bound({
+                    lower: new SMPTE("00:00:00:00"),
+                    upper: this.duration(),
+                  })
+                  .add(new SMPTE("00:00:15:00"), true)
+              );
+            }}
+          >
+            <div className={styles.fastForward}>
+              <p>15</p>
+              <Image
+                src="/fast_forward.svg"
+                alt="Fast Forward"
+                width={48}
+                height={48}
+                style={{ transform: "scale(1.4)" }}
+              />
+            </div>
+          </div>
+          <div className={styles.pause}>
+            <Image
+              src="/star.svg"
+              alt="Set Out"
+              width={48}
+              height={48}
+              style={{ transform: "scale(1.1)" }}
+            />
+          </div>
+          <div
+            className={styles.arrowContainer}
+            onClick={() => {
+              this.setTime(
+                this.duration()
+                  .bound({
+                    lower: new SMPTE("00:00:00:00"),
+                    upper: this.duration(),
+                  })
+                  .subtract(new SMPTE("00:00:20:00"), true)
+              );
+            }}
+          >
+            <div className={styles.fastForward}>
+              <p>20</p>
+              <Image
+                src="/skip_next.svg"
+                alt="Skip Next"
+                width={48}
+                height={48}
+                style={{ transform: "scale(1.4)" }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  program() {
+        return (
+          <div className={styles.onaircontainer}>
+            <div className={styles.onair}>
+              <Image
+                src="/play.svg"
+                alt="Play"
+                width={48}
+                height={48}
+                style={{ transform: "scale(1.4)" }}
+              />
+              <p>ON AIR</p>
+            </div>
+          </div>
+        );
+  }
+
+  preview() {
+    return (
+      <div className={styles.playbackmode}>
+        <div
+          className={styles.skipPrevious}
+          title="Recue"
+          onClick={() => {
+            this.recue(false);
+          }}
+        >
+          <Image
+            src="/skip_previous.svg"
+            alt="Recue"
+            width={48}
+            height={48}
+            style={{ transform: "scale(0.9,1.2)" }}
+          />
+        </div>
+        <div
+          className={styles.playContainer}
+          onClick={() => {
+            this.play();
+          }}
+        >
+          <div className={styles.play} title="Play">
+            <p>PLAY</p>
+            <Image
+              src="/play.svg"
+              alt="Play"
+              width={48}
+              height={48}
+              style={{ transform: "scale(1.4)" }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     return (
       <div className={styles.container}>
@@ -93,195 +288,9 @@ export class DisplayCurrentControlComponent
         </div>
         <SeekBarComponent className={styles.seek} clock={this} />
         {(() => {
-          return (
-            <div className={styles.control}>
-              <div className={styles.playback}>
-                <div
-                  className={styles.skipPrevious}
-                  title="Recue"
-                  onClick={() => {
-                    this.recue(false);
-                  }}
-                >
-                  <Image
-                    src="/skip_previous.svg"
-                    alt="Recue"
-                    width={48}
-                    height={48}
-                    style={{ transform: "scale(0.9,1.2)" }}
-                  />
-                </div>
-                <div
-                  className={styles.playContainer}
-                  onClick={() => {
-                    this.play();
-                  }}
-                >
-                  <div className={styles.play} title="Play">
-                    <p>PLAY</p>
-                    <Image
-                      src="/play.svg"
-                      alt="Play"
-                      width={48}
-                      height={48}
-                      style={{ transform: "scale(1.4)" }}
-                    />
-                  </div>
-                </div>
-                <div
-                  className={styles.pause}
-                  title="Pause"
-                  onClick={() => {
-                    this.pause(false);
-                  }}
-                >
-                  <Image
-                    src="/pause.svg"
-                    alt="Pause"
-                    width={48}
-                    height={48}
-                    style={{ transform: "scale(0.9,1.2)" }}
-                  />
-                </div>
-              </div>
-              <div className={styles.rehearsalcontrols}>
-                <div
-                  className={styles.arrowContainer}
-                  onClick={() => {
-                    this.setTime(
-                      this.current()
-                        .bound({
-                          lower: new SMPTE("00:00:00:00"),
-                          upper: this.duration(),
-                        })
-                        .subtract(new SMPTE("00:00:15:00"), true)
-                    );
-                  }}
-                >
-                  <div className={styles.fastForward}>
-                    <Image
-                      src="/fast_rewind.svg"
-                      alt="Fast Rewind"
-                      width={48}
-                      height={48}
-                      style={{ transform: "scale(1.4)" }}
-                    />
-                    <p>15</p>
-                  </div>
-                </div>
-                <div
-                  className={styles.arrowContainer}
-                  onClick={() => {
-                    this.setTime(
-                      this.current()
-                        .bound({
-                          lower: new SMPTE("00:00:00:00"),
-                          upper: this.duration(),
-                        })
-                        .add(new SMPTE("00:00:15:00"), true)
-                    );
-                  }}
-                >
-                  <div className={styles.fastForward}>
-                    <p>15</p>
-                    <Image
-                      src="/fast_forward.svg"
-                      alt="Fast Forward"
-                      width={48}
-                      height={48}
-                      style={{ transform: "scale(1.4)" }}
-                    />
-                  </div>
-                </div>
-                <div className={styles.pause}>
-                  <Image
-                    src="/star.svg"
-                    alt="Set Out"
-                    width={48}
-                    height={48}
-                    style={{ transform: "scale(1.1)" }}
-                  />
-                </div>
-                <div
-                  className={styles.arrowContainer}
-                  onClick={() => {
-                    this.setTime(
-                      this.duration()
-                        .bound({
-                          lower: new SMPTE("00:00:00:00"),
-                          upper: this.duration(),
-                        })
-                        .subtract(new SMPTE("00:00:20:00"), true)
-                    );
-                  }}
-                >
-                  <div className={styles.fastForward}>
-                    <p>20</p>
-                    <Image
-                      src="/skip_next.svg"
-                      alt="Skip Next"
-                      width={48}
-                      height={48}
-                      style={{ transform: "scale(1.4)" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-          //   case "automation":
-          //     return (
-          //       <div className={styles.onaircontainer}>
-          //         <div className={styles.onair}>
-          //           <Image
-          //             src="/play.svg"
-          //             alt="Play"
-          //             width={48}
-          //             height={48}
-          //             style={{ transform: "scale(1.4)" }}
-          //           />
-          //           <p>ON AIR</p>
-          //         </div>
-          //       </div>
-          //     );
-          //   case "playback":
-          //     return (
-          //       <div className={styles.playbackmode}>
-          //         <div
-          //           className={styles.skipPrevious}
-          //           title="Recue"
-          //           onClick={() => {
-          //             this.recue(false);
-          //           }}
-          //         >
-          //           <Image
-          //             src="/skip_previous.svg"
-          //             alt="Recue"
-          //             width={48}
-          //             height={48}
-          //             style={{ transform: "scale(0.9,1.2)" }}
-          //           />
-          //         </div>
-          //         <div
-          //           className={styles.playContainer}
-          //           onClick={() => {
-          //             this.play();
-          //           }}
-          //         >
-          //           <div className={styles.play} title="Play">
-          //             <p>PLAY</p>
-          //             <Image
-          //               src="/play.svg"
-          //               alt="Play"
-          //               width={48}
-          //               height={48}
-          //               style={{ transform: "scale(1.4)" }}
-          //             />
-          //           </div>
-          //         </div>
-          //       </div>
-          //     );
-          // }
+          if (this.m_manager.tally().rehearsal) return this.rehearsal();
+          if (this.m_manager.tally().program) return this.program();
+          else return this.preview();
         })()}
       </div>
     );
@@ -463,7 +472,7 @@ export class DisplayCurrentControlComponent
   }
 
   private m_id: ClockLookup;
-  private m_manager: IClockManager;
+  private m_manager: ClientManagerComponent;
   state: {
     currentState: CurrentClockState | undefined;
     config: (BaseClockConfig & unknown) | undefined;

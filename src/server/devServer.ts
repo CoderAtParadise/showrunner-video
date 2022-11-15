@@ -8,6 +8,9 @@ import { Codec } from "@coderatparadise/showrunner-time";
 import EventEmitter from "events";
 import multicast from "multicast-dns";
 import ip from "ip";
+//@ts-ignore
+import { registerCodec } from "@coderatparadise/showrunner-network/codec";
+import { AmpConnectionCodec } from "./channel/amp/AmpConnectionCodec.js";
 EventEmitter.setMaxListeners(0); // We add event listeners for every subscription is this wise proabably not but ehh we are doing it and that is why we uncue videos
 const mdns = multicast();
 
@@ -43,6 +46,7 @@ if (!global.fetch) {
   (global as any).fetch = import("node-fetch");
 }
 Codec.registerCodecs();
+registerCodec("connection:amp", AmpConnectionCodec);
 loadChannels();
 const wss = new ws.Server({ port: 3001 });
 

@@ -63,10 +63,10 @@ export class ClientClockSourceComponent
     return (
       <div
         className={styles.container}
-        data-tallyPreview={
+        data-tallypreview={
           (this.m_manager as ClientManagerComponent).tally().preview
         }
-        data-tallyProgram={
+        data-tallyprogram={
           (this.m_manager as ClientManagerComponent).tally().program
         }
         data-cued={this.status() !== ClockStatus.UNCUED}
@@ -75,7 +75,7 @@ export class ClientClockSourceComponent
         }}
       >
         <span className={styles.fileName}>{this.name()}</span>
-        <span className={styles.hovername}>{this.name()}</span>
+        {/* <span className={styles.hovername}>{this.name()}</span> */}
         <CurrentDurationComponent
           clock={this}
           show="duration"

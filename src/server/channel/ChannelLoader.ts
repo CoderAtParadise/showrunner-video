@@ -1,23 +1,21 @@
+import {
+  NetworkConnection,
+  Service,
+  //@ts-ignore
+} from "@coderatparadise/showrunner-network";
+//@ts-ignore
+import { getCodec } from "@coderatparadise/showrunner-network/codec";
 //@ts-ignore
 import { FrameRate } from "@coderatparadise/showrunner-time";
 import fs from "fs/promises";
 import { listManagers, registerManager } from "./ManagerRegistry";
 import { VideoManager } from "./VideoManager";
 
-export type Connection = {
-  type: string;
-  address: string;
-  port: number;
-  channel?: string;
-  maxRetries: number;
-  timeBetweenRetries: number[];
-};
-
 type ChannelInfo = {
   channel: string;
   name: string;
   frameRate: FrameRate;
-  connections: Connection[];
+  connections: NetworkConnection[];
 };
 
 export async function loadChannels(): Promise<void> {
@@ -31,8 +29,14 @@ export async function loadChannels(): Promise<void> {
         name: info.name,
         frameRate: info.frameRate,
       });
-      for (const connection of info.connections) {
-        manager.addConnection(connection);
+      for (const cinfo of info.connections) {
+        const type = cinfo.type;
+        const connection = getCodec(`connection:${type}`).deserialize(
+          cinfo,
+          undefined,
+          manager
+        ) as Service<unknown, NetworkConnection>;
+        manager.addConnection(type, connection);
       }
       registerManager(manager);
       setInterval(() => {
@@ -47,13 +51,25 @@ export async function loadChannels(): Promise<void> {
 export async function saveChannels(): Promise<void> {
   const buffer: ChannelInfo[] = [];
   for (const manager of await listManagers()) {
-    const info: ChannelInfo = {
+    const connections: NetworkConnection[] = [];
+    manager.connectionTypes().forEach((value: string) => {
+      connections.push(
+        ...manager
+          .connections(value)!
+          .map<NetworkConnection>(
+            (value: Service<unknown, NetworkConnection>) =>
+              getCodec(`connection:${value}`).serialize(
+                value
+              ) as NetworkConnection
+          )
+      );
+    });
+    buffer.push({
       channel: manager.id(),
       name: manager.name(),
       frameRate: manager.frameRate(),
-      connections: manager.connections(),
-    };
-    buffer.push(info);
+      connections: connections,
+    });
   }
 
   const file = fs.writeFile("./channels.json", JSON.stringify(buffer));

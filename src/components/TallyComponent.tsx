@@ -8,10 +8,10 @@ export const TallyComponent = (props: {
   return (
     <div
       className={styles.tally}
-      data-tallyPreview={props.tally.preview}
-      data-tallyProgram={props.tally.program}
+      data-tallypreview={props.tally.preview}
+      data-tallyprogram={props.tally.program}
     >
-      <p>{props.name}</p>
+      <span>{props.name}</span>
     </div>
   );
 };

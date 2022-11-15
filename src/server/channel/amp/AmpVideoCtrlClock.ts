@@ -88,19 +88,39 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
   }
 
   async cue(): Promise<boolean> {
-    if (this.m_status === ClockStatus.UNCUED && !this.m_lockInput) {
+    if (
+      this.m_status === ClockStatus.UNCUED &&
+      !this.m_lockInput &&
+      this.m_manager.cueLock(
+        `${this.identifier().id}:${this.identifier().type}`,
+        true
+      )
+    ) {
       this.m_lockInput = true;
       if (this.m_manager.current().id !== this.m_sourceId) {
         const vdata = this.m_manager
           .cache()
           .get(this.m_sourceId) as AmpVideoData;
-        if (!vdata) return await AsyncUtils.booleanReturn(false);
+        if (!vdata) {
+          this.m_lockInput = false;
+          this.m_manager.cueLock(
+            `${this.identifier().id}:${this.identifier().type}`,
+            false
+          );
+          return await AsyncUtils.booleanReturn(false);
+        }
         const cue = await this.m_manager.sendCommand(Command.InPreset, {
           byteCount: "A",
           data: { clipName: vdata.metadata.ampid },
         });
-        if (cue.code !== Return.ACK.code)
+        if (cue.code !== Return.ACK.code) {
+          this.m_lockInput = false;
+          this.m_manager.cueLock(
+            `${this.identifier().id}:${this.identifier().type}`,
+            false
+          );
           return await AsyncUtils.booleanReturn(false);
+        }
       }
       this.m_status = ClockStatus.CUED;
       this.m_manager.startUpdating(
@@ -112,6 +132,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         this.identifier()
       );
       this.m_lockInput = false;
+      this.m_manager.cueLock(
+        `${this.identifier().id}:${this.identifier().type}`,
+        false
+      );
       return await AsyncUtils.booleanReturn(true);
     }
     return await AsyncUtils.booleanReturn(false);
@@ -265,21 +289,27 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     const videoData = this.m_manager
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
-    if (videoData !== undefined && !this.m_lockInput) {
-      if (
-        this.m_lastRequest !== ClockStatus.INVALID &&
-        this.m_lastRequest !== videoData.status
-      ) {
-        this.m_status = videoData.status = this.m_lastRequest;
-        this.m_lastRequest = ClockStatus.INVALID;
+    if (videoData !== undefined) {
+      if (this.m_manager.current().id !== this.m_sourceId) {
+        this.uncue();
+        return;
       }
-      if (this.m_status !== ClockStatus.UNCUED) {
-        this.m_status = videoData.status;
+      if (!this.m_lockInput) {
+        if (
+          this.m_lastRequest !== ClockStatus.INVALID &&
+          this.m_lastRequest !== videoData.status
+        ) {
+          this.m_status = videoData.status = this.m_lastRequest;
+          this.m_lastRequest = ClockStatus.INVALID;
+        }
+        if (this.m_status !== ClockStatus.UNCUED) {
+          this.m_status = videoData.status;
+        }
+        void this.m_manager.dispatch(
+          { type: MessageClockCurrent, handler: "event" },
+          this.identifier()
+        );
       }
-      void this.m_manager.dispatch(
-        { type: MessageClockCurrent, handler: "event" },
-        this.identifier()
-      );
     }
     return await AsyncUtils.voidReturn();
   }

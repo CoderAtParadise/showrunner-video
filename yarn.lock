@@ -40,10 +40,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coderatparadise/showrunner-network@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "@coderatparadise/showrunner-network@npm:2.1.2::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-network%2F2.1.2%2F5bedede53fa299919e653ebbfc77ff7fcd88ee6a"
-  checksum: 02a70e3d5f3ac6249ddc8eeede10485bcfee7bec3cf3335afa8000c568a69f1bd79174b9ef512dfdc13de812c5e4d960ee35b061b8021a6684c0fbbfe1a4577b
+"@coderatparadise/showrunner-network@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "@coderatparadise/showrunner-network@npm:2.1.3::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40CoderAtParadise%2Fshowrunner-network%2F2.1.3%2F88601d93470fe1df12f4133ba2d3f8f8325272f3"
+  checksum: 1c883fc34590da610741d365e444a08eab6930d63ac1cc503caa272e171120c8e543fa8ace17aaa3da1af385ba567c638c2465bcd8a0ab5bbefa263eb125cf3d
   languageName: node
   linkType: hard
 
@@ -63,7 +63,7 @@ __metadata:
   resolution: "@coderatparadise/showrunner-video@workspace:."
   dependencies:
     "@coderatparadise/amp-grassvalley": "npm:^2.1.7"
-    "@coderatparadise/showrunner-network": "npm:^2.1.2"
+    "@coderatparadise/showrunner-network": "npm:^2.1.3"
     "@coderatparadise/showrunner-time": "npm:^0.2.5"
     "@trpc/client": "npm:^10.0.0-rc.7"
     "@trpc/server": "npm:^10.0.0-rc.7"

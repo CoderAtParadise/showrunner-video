@@ -46,6 +46,20 @@ export const videoRouter = trpc.router({
         });
       return manager.name();
     }),
+  setRehearsalMode: trpc.procedure
+    .input(z.object({ identifier: z.string(), rehearsal: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const manager = await getManager(input.identifier);
+      if (!manager)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Failed to find manager`,
+        });
+      manager.setRehearsalMode(input.rehearsal);
+    }),
+  connections: trpc.procedure
+    .input(z.string())
+    .subscription(async ({ input }) => {}),
   tally: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
     const manager = await getManager(input);
     if (!manager)
@@ -53,9 +67,13 @@ export const videoRouter = trpc.router({
         code: "NOT_FOUND",
         message: `Failed to find manager`,
       });
-    return observable<{ preview: boolean; program: boolean }>((emit) => {
+    return observable<{
+      rehearsal: boolean;
+      preview: boolean;
+      program: boolean;
+    }>((emit) => {
       const tally = async () => {
-        emit.next((manager as VideoManager).tally());
+        emit.next(manager.tally());
       };
       tally();
       ManagerEvents.addListener("manager.tally", tally);

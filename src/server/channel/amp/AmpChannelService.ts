@@ -19,9 +19,9 @@ import {
   //@ts-ignore
 } from "@coderatparadise/showrunner-network";
 import { AmpMetadata, extractId, extractMetadata } from "./AmpVideoMetadata";
-import { Connection } from "../ChannelLoader";
 import { AmpCurrentCtrlClock } from "./AmpCurrentCtrlClock";
 import { AmpVideoCtrlClock } from "./AmpVideoCtrlClock";
+import { AmpConnection } from "./AmpConnection.js";
 
 export type AmpVideoData = {
   id: string;
@@ -33,8 +33,12 @@ export type AmpVideoData = {
   metadata: AmpMetadata;
 };
 
-export class AmpChannelService implements Service<AmpChannel> {
-  constructor(id: string, manager: VideoManager, connectionInfo: Connection) {
+export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
+  constructor(
+    id: string,
+    manager: VideoManager,
+    connectionInfo: AmpConnection
+  ) {
     this.m_id = id;
     this.m_manager = manager;
     this.m_connectionInfo = connectionInfo;
@@ -93,14 +97,11 @@ export class AmpChannelService implements Service<AmpChannel> {
     } else if (id === "current") return this.m_current;
   }
 
-  configure(newSettings?: object): object {
+  config(newSettings?: object): AmpConnection {
     if (newSettings !== undefined) {
       // if(newSettings.maxRetries)
     }
-    return {
-      id: this.m_id,
-      connectionInfo: this.m_connectionInfo,
-    };
+    return this.m_connectionInfo;
   }
 
   private async pollCurrentInfo(): Promise<void> {
@@ -303,7 +304,7 @@ export class AmpChannelService implements Service<AmpChannel> {
 
   private m_id: string;
   tryCounter: number = 0;
-  private m_connectionInfo: Connection;
+  private m_connectionInfo: AmpConnection;
   private m_source: AmpChannel;
   private m_cuedRemove: { id: string; time: number }[] = [];
   private m_current: { id: string; time: SMPTE; raw: string } = {
