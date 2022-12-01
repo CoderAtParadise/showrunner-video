@@ -68,7 +68,7 @@
   display: grid;
   grid-auto-flow: column;
   grid-column-gap: 5px;
-  grid-template-columns: 1.5fr 1.5fr 1fr 1.5fr;
+  grid-template-columns: 2fr 2fr 2fr;
 }
 
 .playback > *,
@@ -110,11 +110,13 @@
 .pause {
   display: grid;
   padding: 10px;
+  padding-left: 20px;
 }
 
 .skipPrevious {
   display: grid;
   padding: 10px;
+  padding-left: 20px;
 }
 
 .fastForward {

@@ -6,7 +6,7 @@ import {
 //@ts-ignore
 import { getCodec } from "@coderatparadise/showrunner-network/codec";
 //@ts-ignore
-import { FrameRate } from "@coderatparadise/showrunner-time";
+import { FrameRate, ManagerIdentifier } from "@coderatparadise/showrunner-time";
 import fs from "fs/promises";
 import { listManagers, registerManager } from "./ManagerRegistry";
 import { VideoManager } from "./VideoManager";
@@ -25,10 +25,13 @@ export async function loadChannels(): Promise<void> {
     const channels = JSON.parse((await fd.readFile()).toString());
     for (const channel of channels) {
       const info = channel as ChannelInfo;
-      const manager = new VideoManager(info.channel, {
-        name: info.name,
-        frameRate: info.frameRate,
-      });
+      const manager = new VideoManager(
+        new ManagerIdentifier("video", "video", info.channel),
+        {
+          name: info.name,
+          frameRate: info.frameRate,
+        }
+      );
       for (const cinfo of info.connections) {
         const type = cinfo.type;
         const connection = getCodec(`connection:${type}`).deserialize(
@@ -65,7 +68,7 @@ export async function saveChannels(): Promise<void> {
       );
     });
     buffer.push({
-      channel: manager.id(),
+      channel: manager.identifier().session(),
       name: manager.name(),
       frameRate: manager.frameRate(),
       connections: connections,

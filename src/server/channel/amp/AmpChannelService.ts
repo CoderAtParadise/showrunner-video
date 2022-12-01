@@ -16,12 +16,13 @@ import {
   Service,
   AsyncUtils,
   ServiceIdentifier,
+  NetworkConnection,
   //@ts-ignore
 } from "@coderatparadise/showrunner-network";
 import { AmpMetadata, extractId, extractMetadata } from "./AmpVideoMetadata";
-import { AmpCurrentCtrlClock } from "./AmpCurrentCtrlClock";
 import { AmpVideoCtrlClock } from "./AmpVideoCtrlClock";
-import { AmpConnection } from "./AmpConnection.js";
+//@ts-ignore
+import { ManagerIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
 
 export type AmpVideoData = {
   id: string;
@@ -33,6 +34,10 @@ export type AmpVideoData = {
   metadata: AmpMetadata;
 };
 
+export type AmpConnection = NetworkConnection & {
+  channel: string;
+};
+
 export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   constructor(
     id: string,
@@ -42,7 +47,6 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     this.m_id = id;
     this.m_manager = manager;
     this.m_connectionInfo = connectionInfo;
-    this.m_manager.add(new AmpCurrentCtrlClock(this.m_manager));
     this.m_source = new AmpChannel(
       this.m_connectionInfo.address,
       this.m_connectionInfo.port,
@@ -59,7 +63,10 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     };
   }
 
-  async open(retryHandler: () => Promise<boolean>): Promise<boolean> {
+  async open(
+    //eslint-disable-next-line no-unused-vars
+    retryHandler: (tryCounter: number) => Promise<boolean>
+  ): Promise<boolean> {
     this.m_videoCache.clear();
     this.m_current = { id: "", time: new SMPTE(), raw: "" };
     const open = await this.m_source.open(retryHandler);
@@ -234,7 +241,11 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             if (now > i.time + 1000) {
               this.m_videoCache.delete(i.id);
               this.m_manager.remove(
-                `video:video:${this.m_manager.id()}:${i.id}:ampvideoctrl`
+                `${
+                  ManagerIdentifierCodec.serialize(
+                    this.m_manager.identifier()
+                  ) as `${string}:${string}:${string}`
+                }:${i.id}:ampvideoctrl`
               );
               this.m_cuedRemove.splice(
                 this.m_cuedRemove.findIndex((k) => (k.id = key.id)),
@@ -303,10 +314,10 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   }
 
   private m_id: string;
-  tryCounter: number = 0;
   private m_connectionInfo: AmpConnection;
   private m_source: AmpChannel;
   private m_cuedRemove: { id: string; time: number }[] = [];
+  private m_lastId: { id: string; time: number } = { id: "", time: 0 };
   private m_current: { id: string; time: SMPTE; raw: string } = {
     id: "",
     time: new SMPTE(),

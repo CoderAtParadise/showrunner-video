@@ -30,14 +30,14 @@
 }
 
 .control {
-  height: 287px;
+  height: var(--control-height);
 }
 
 .videos {
   margin: auto;
   width: 60%;
-  height: calc(100% - 287px - max(5%,50px));
-  max-height: calc(100% - 287px - - max(5%,50px));
+  height: calc(100% - var(--control-height) - max(5%, 50px));
+  max-height: calc(100% - var(--control-height) - max(5%, 50px));
 }
 
 .scrollable {
