@@ -2,7 +2,6 @@
 import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import {
   BaseClockConfig,
-  ClockLookup,
   FrameRate,
   IClockSource,
   ClockIdentifier,
@@ -21,13 +20,15 @@ import {
   MessageClockConfig,
   IClockManager,
   MessageClockCurrent,
+  MessageClockAddChapter,
+  MessageClockRemoveChapter,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 //@ts-ignore
 import { CurrentDurationComponent } from "@coderatparadise/showrunner-time/extension";
 import {
   AdditionalData,
-  ClockIdentifierCodec,
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
@@ -36,12 +37,12 @@ import { Component } from "react";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 
 export class ClientClockSourceComponent
-  extends Component<{ id: ClockLookup; manager: IClockManager }>
+  extends Component<{ id: ClockIdentifier; manager: IClockManager }>
   implements IClockSource<unknown>
 {
   constructor(props: {
     className?: string;
-    id: ClockLookup;
+    id: ClockIdentifier;
     manager: IClockManager;
   }) {
     super(props);
@@ -51,6 +52,7 @@ export class ClientClockSourceComponent
       currentState: undefined,
       config: undefined,
       additional: undefined,
+      chapters: [],
     };
     this.m_manager.add(this);
   }
@@ -95,7 +97,7 @@ export class ClientClockSourceComponent
   }
 
   identifier(): ClockIdentifier {
-    return ClockIdentifierCodec.deserialize(this.m_id);
+    return this.m_id;
   }
 
   status(): ClockStatus {
@@ -215,10 +217,32 @@ export class ClientClockSourceComponent
       this.identifier(),
       time
     );
-    if (settime.type === MessageClockCommand) {
-      return settime.ret as boolean;
-    }
+    if (settime.type === MessageClockCommand) return settime.ret as boolean;
     return await AsyncUtils.booleanReturn(false);
+  }
+
+  async chapters(): Promise<ClockIdentifier[]> {
+    return await AsyncUtils.typeReturn<ClockIdentifier[]>(this.state.chapters);
+  }
+
+  async addChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const addChapter = await this.m_manager.dispatch(
+      { type: MessageClockAddChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (addChapter.ret as boolean) return addChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const removeChapter = await this.m_manager.dispatch(
+      { type: MessageClockRemoveChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (removeChapter.ret as boolean) return removeChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
   }
 
   async updateConfig(
@@ -244,6 +268,18 @@ export class ClientClockSourceComponent
     this.setState({ additional: data });
   }
 
+  _syncChapters(chapters: string[]) {
+    const identifiers: ClockIdentifier[] = [];
+    chapters.forEach((chapter: string) =>
+      identifiers.push(new ClockIdentifier(chapter))
+    );
+    this.setState({ chapters: identifiers });
+  }
+
+  _sortChapters(): void {
+    //NOOP
+  }
+
   async _update(): Promise<void> {
     await this.m_manager.dispatch(
       { type: MessageClockData, handler: "network" },
@@ -257,14 +293,19 @@ export class ClientClockSourceComponent
       { type: MessageClockConfig, handler: "network" },
       this.identifier()
     );
+    await this.m_manager.dispatch(
+      { type: MessageClockChapter, handler: "network" },
+      this.identifier()
+    );
     return await AsyncUtils.voidReturn();
   }
 
-  private m_id: ClockLookup;
+  private m_id: ClockIdentifier;
   private m_manager: IClockManager;
   state: {
     currentState: CurrentClockState | undefined;
     config: (BaseClockConfig & unknown) | undefined;
     additional: AdditionalData | undefined;
+    chapters: ClockIdentifier[];
   };
 }

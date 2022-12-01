@@ -5,10 +5,10 @@ import {
   SMPTE,
   FrameRate,
   MessageClockList,
+  ManagerIdentifier,
+  ClockIdentifier,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
-//@ts-ignore
-import { ClockIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
 import { EventEmitter } from "events";
 import {
   AsyncUtils,
@@ -24,17 +24,21 @@ import { AmpChannelService, AmpVideoData } from "./amp/AmpChannelService";
 //@ts-ignore
 import { AmpCommand, CommandReturn } from "@coderatparadise/amp-grassvalley";
 import { ManagerEvents } from "./ManagerRegistry";
+import { CurrentCtrlClock } from "./CurrentCtrlClock";
+import { CurrentChapterClock } from "./CurrentChapterClock";
 
 export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
   constructor(
-    channel: string,
+    identifier: ManagerIdentifier,
     settings: { name: string; frameRate: FrameRate }
   ) {
-    this.m_channel = channel;
+    this.m_channel = identifier;
     this.m_settings = settings;
+    this.add(new CurrentCtrlClock(this));
+    this.add(new CurrentChapterClock(this));
   }
 
-  id(): string {
+  identifier(): ManagerIdentifier {
     return this.m_channel;
   }
 
@@ -42,56 +46,66 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     return this.m_settings.name;
   }
 
-  async cue(id: ClockLookup): Promise<boolean> {
+  async cue(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
-    return await clock.cue();
+    const cued = await clock.cue();
+    const chapters = await this.chapters(id);
+    chapters.forEach(
+      async (cid: ClockIdentifier) => void (await this.cue(cid))
+    );
+    return cued;
   }
 
-  async uncue(id: ClockLookup): Promise<boolean> {
+  async uncue(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
-    return await clock.uncue();
+    const uncued = await clock.uncue();
+    const chapters = await this.chapters(id);
+    chapters.forEach(async (cid: ClockIdentifier) => this.uncue(cid));
+    return uncued;
   }
 
-  async play(id: ClockLookup): Promise<boolean> {
+  async play(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
     return await clock.play();
   }
 
-  async pause(id: ClockLookup): Promise<boolean> {
+  async pause(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
     return await clock.pause(false);
   }
 
-  async stop(id: ClockLookup): Promise<boolean> {
+  async stop(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
     return await clock.stop(false);
   }
 
-  async recue(id: ClockLookup): Promise<boolean> {
+  async recue(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
     return await clock.recue(false);
   }
 
-  async setTime(id: ClockLookup, time: SMPTE): Promise<boolean> {
+  async setTime(id: ClockIdentifier, time: SMPTE): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
     return await clock.setTime(time);
   }
 
-  request(id: ClockLookup): IClockSource<VideoCtrlData | unknown> | undefined {
-    return this.m_videos.get(id);
+  request(
+    id: ClockIdentifier
+  ): IClockSource<VideoCtrlData | unknown> | undefined {
+    return this.m_videos.get(id.toString());
   }
 
   list(filter: string | string[]): ClockLookup[] {
     if (filter.length === 0) return Array.from(this.m_videos.keys());
     return Array.from(this.m_videos.keys()).filter((key) => {
-      const type = ClockIdentifierCodec.deserialize(key).type;
+      const type = new ClockIdentifier(key).type();
       if (filter as string) return type === filter;
       else if (filter as string[]) {
         (filter as string[]).forEach((s) => type === s);
@@ -100,9 +114,7 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
   }
 
   add(clock: IClockSource<any>): boolean {
-    const id: ClockLookup = ClockIdentifierCodec.serialize(
-      clock.identifier()
-    ) as ClockLookup;
+    const id: ClockLookup = clock.identifier().toString();
     this.m_videos.set(id, clock);
     this.dispatch({ type: MessageClockList, handler: "event" });
     return this.m_videos.has(id);
@@ -112,13 +124,16 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     return this.m_videos.delete(id);
   }
 
-  startUpdating(id: ClockLookup, updateFunction: () => Promise<void>): void {
-    this.m_updateFunctions.set(id, updateFunction);
+  startUpdating(
+    id: ClockIdentifier,
+    updateFunction: () => Promise<void>
+  ): void {
+    this.m_updateFunctions.set(id.toString(), updateFunction);
   }
 
-  stopUpdating(id: ClockLookup): void {
-    const index = this.m_updateFunctions.has(id);
-    if (index) this.m_updateFunctions.delete(id);
+  stopUpdating(id: ClockIdentifier): void {
+    const index = this.m_updateFunctions.has(id.toString());
+    if (index) this.m_updateFunctions.delete(id.toString());
   }
 
   update() {
@@ -127,6 +142,36 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
 
   frameRate(): FrameRate {
     return this.m_settings.frameRate;
+  }
+
+  async chapters(id: ClockIdentifier): Promise<ClockIdentifier[]> {
+    const owner: IClockSource<unknown> | undefined = this.request(id);
+    if (owner) return await owner.chapters();
+
+    return await AsyncUtils.typeReturn<ClockIdentifier[]>([]);
+  }
+
+  async addChapter(
+    id: ClockIdentifier,
+    chapter: ClockIdentifier
+  ): Promise<boolean> {
+    const owner: IClockSource<unknown> | undefined = this.request(id);
+    if (owner) return await owner.addChapter(chapter);
+    return await AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(
+    id: ClockIdentifier,
+    chapter: ClockIdentifier
+  ): Promise<boolean> {
+    const owner: IClockSource<unknown> | undefined = this.request(id);
+    if (owner) return await owner.removeChapter(chapter);
+    return await AsyncUtils.booleanReturn(false);
+  }
+
+  _sortChapters(id: ClockIdentifier) {
+    const owner: IClockSource<unknown> | undefined = this.request(id);
+    if (owner) owner._sortChapters();
   }
 
   addConnection(
@@ -192,13 +237,24 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     return new Map<string, AmpVideoData>();
   }
 
-  // TODO overhaul to make more generic
-  current(): { id: string; time: SMPTE } {
+  current(): { id: ClockIdentifier | undefined; time: SMPTE } {
     for (const connection of this.connections("amp") as AmpChannelService[]) {
-      if (connection.isOpen())
-        return connection.data("current") as { id: string; time: SMPTE };
+      if (connection.isOpen()) {
+        const current = connection.data("current") as {
+          id: string;
+          time: SMPTE;
+        };
+        return {
+          id: new ClockIdentifier(
+            this.identifier(),
+            current.id,
+            "ampvideoctrl"
+          ),
+          time: current.time,
+        };
+      }
     }
-    return { id: "", time: new SMPTE() };
+    return { id: undefined, time: new SMPTE() };
   }
 
   setRehearsalMode(rehearsal: boolean): void {
@@ -259,7 +315,7 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
     }
   }
 
-  private m_channel: string;
+  private m_channel: ManagerIdentifier;
   private m_videos: Map<ClockLookup, IClockSource<VideoCtrlData | unknown>> =
     new Map<ClockLookup, IClockSource<VideoCtrlData | unknown>>();
   private m_updateFunctions: Map<ClockLookup, () => Promise<void>> = new Map<

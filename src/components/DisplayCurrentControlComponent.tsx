@@ -2,7 +2,6 @@
 import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import {
   BaseClockConfig,
-  ClockLookup,
   FrameRate,
   IClockSource,
   ClockIdentifier,
@@ -20,11 +19,13 @@ import {
   MessageClockData,
   MessageClockCurrent,
   MessageClockConfig,
+  MessageClockRemoveChapter,
+  MessageClockAddChapter,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import {
   AdditionalData,
-  ClockIdentifierCodec,
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
@@ -35,12 +36,12 @@ import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 
 export class DisplayCurrentControlComponent
-  extends Component<{ id: ClockLookup; manager: ClientManagerComponent }>
+  extends Component<{ id: ClockIdentifier; manager: ClientManagerComponent }>
   implements IClockSource<unknown>
 {
   constructor(props: {
     className?: string;
-    id: ClockLookup;
+    id: ClockIdentifier;
     manager: ClientManagerComponent;
   }) {
     super(props);
@@ -51,6 +52,7 @@ export class DisplayCurrentControlComponent
       config: undefined,
       additional: undefined,
       scroll: false,
+      chapters: [],
     };
     this.m_manager.add(this);
   }
@@ -180,15 +182,6 @@ export class DisplayCurrentControlComponent
               />
             </div>
           </div>
-          <div className={styles.pause}>
-            <Image
-              src="/star.svg"
-              alt="Set Out"
-              width={48}
-              height={48}
-              style={{ transform: "scale(1.1)" }}
-            />
-          </div>
           <div
             className={styles.arrowContainer}
             onClick={() => {
@@ -219,20 +212,20 @@ export class DisplayCurrentControlComponent
   }
 
   program() {
-        return (
-          <div className={styles.onaircontainer}>
-            <div className={styles.onair}>
-              <Image
-                src="/play.svg"
-                alt="Play"
-                width={48}
-                height={48}
-                style={{ transform: "scale(1.4)" }}
-              />
-              <p>ON AIR</p>
-            </div>
-          </div>
-        );
+    return (
+      <div className={styles.onaircontainer}>
+        <div className={styles.onair}>
+          <Image
+            src="/play.svg"
+            alt="Play"
+            width={48}
+            height={48}
+            style={{ transform: "scale(1.4)" }}
+          />
+          <p>ON AIR</p>
+        </div>
+      </div>
+    );
   }
 
   preview() {
@@ -305,7 +298,7 @@ export class DisplayCurrentControlComponent
   }
 
   identifier(): ClockIdentifier {
-    return ClockIdentifierCodec.deserialize(this.m_id);
+    return this.m_id;
   }
 
   status(): ClockStatus {
@@ -431,6 +424,30 @@ export class DisplayCurrentControlComponent
     return await AsyncUtils.booleanReturn(false);
   }
 
+  async chapters(): Promise<ClockIdentifier[]> {
+    return await AsyncUtils.typeReturn<ClockIdentifier[]>(this.state.chapters);
+  }
+
+  async addChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const addChapter = await this.m_manager.dispatch(
+      { type: MessageClockAddChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (addChapter.ret as boolean) return addChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const removeChapter = await this.m_manager.dispatch(
+      { type: MessageClockRemoveChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (removeChapter.ret as boolean) return removeChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
+  }
+
   async updateConfig(
     settings: BaseClockConfig & unknown,
     local?: boolean
@@ -455,6 +472,18 @@ export class DisplayCurrentControlComponent
     this.setState({ additional: data });
   }
 
+  _syncChapters(chapters: string[]) {
+    const identifiers: ClockIdentifier[] = [];
+    chapters.forEach((chapter: string) =>
+      identifiers.push(new ClockIdentifier(chapter))
+    );
+    this.setState({ chapters: identifiers });
+  }
+
+  _sortChapters(): void {
+    // NOOP
+  }
+
   async _update(): Promise<void> {
     await this.m_manager.dispatch(
       { type: MessageClockData, handler: "network" },
@@ -468,15 +497,20 @@ export class DisplayCurrentControlComponent
       { type: MessageClockConfig, handler: "network" },
       this.identifier()
     );
+    await this.m_manager.dispatch(
+      { type: MessageClockChapter, handler: "network" },
+      this.identifier()
+    );
     return await AsyncUtils.voidReturn();
   }
 
-  private m_id: ClockLookup;
+  private m_id: ClockIdentifier;
   private m_manager: ClientManagerComponent;
   state: {
     currentState: CurrentClockState | undefined;
     config: (BaseClockConfig & unknown) | undefined;
     additional: AdditionalData | undefined;
     scroll: boolean;
+    chapters: ClockIdentifier[];
   };
 }

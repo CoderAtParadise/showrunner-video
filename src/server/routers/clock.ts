@@ -10,56 +10,59 @@ import {
   BaseClockConfig,
   SMPTE,
   ClockStatus,
+  ClockIdentifier,
+  ManagerIdentifier,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { trpc } from "../trpc";
 import { z } from "zod";
 import { observable } from "@trpc/server/observable";
 //@ts-ignore
-import { codec } from "@coderatparadise/showrunner-network";
+import { codec, DispatchReturn } from "@coderatparadise/showrunner-network";
 //@ts-ignore
 import { Codec } from "@coderatparadise/showrunner-time";
 
 export function getClockRouter(
   // eslint-disable-next-line no-unused-vars
-  manager: (lookup: ClockLookup) => Promise<IClockManager | undefined>
+  manager: (lookup: ManagerIdentifier) => Promise<IClockManager | undefined>
 ): any {
   const router = trpc.router({
     cue: trpc.procedure
       .input(z.string())
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        return await _manager.cue(input as ClockLookup);
+        return await _manager.cue(new ClockIdentifier(input));
       }),
     uncue: trpc.procedure
       .input(z.string())
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        return await _manager.uncue(input as ClockLookup);
+        return await _manager.uncue(new ClockIdentifier(input));
       }),
     play: trpc.procedure
       .input(z.string())
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        return await _manager.play(input as ClockLookup);
+        return await _manager.play(new ClockIdentifier(input));
       }),
     pause: trpc.procedure
       .input(
@@ -70,14 +73,14 @@ export function getClockRouter(
       )
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
         return await _manager.pause(
-          input.lookup as ClockLookup,
+          new ClockIdentifier(input.lookup),
           input.override
         );
       }),
@@ -90,13 +93,16 @@ export function getClockRouter(
       )
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        return await _manager.stop(input.lookup as ClockLookup, input.override);
+        return await _manager.stop(
+          new ClockIdentifier(input.lookup),
+          input.override
+        );
       }),
     recue: trpc.procedure
       .input(
@@ -107,14 +113,14 @@ export function getClockRouter(
       )
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
         return await _manager.recue(
-          input.lookup as ClockLookup,
+          new ClockIdentifier(input.lookup),
           input.override
         );
       }),
@@ -127,33 +133,34 @@ export function getClockRouter(
       )
       .output(z.boolean())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        const clock = await _manager.request(input.lookup as ClockLookup);
+        const clock = await _manager.request(new ClockIdentifier(input.lookup));
         if (clock?.status() === ClockStatus.RUNNING) {
           const timeSet = await _manager.setTime(
-            input.lookup as ClockLookup,
+            new ClockIdentifier(input.lookup),
             new SMPTE(input.time)
           );
-          if (timeSet) return await _manager.play(input.lookup as ClockLookup);
+          if (timeSet)
+            return await _manager.play(new ClockIdentifier(input.lookup));
         }
         return await _manager.setTime(
-          input.lookup as ClockLookup,
+          new ClockIdentifier(input.lookup),
           new SMPTE(input.time)
         );
       }),
     data: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
-      const _manager = await manager(input as ClockLookup);
+      const _manager = await manager(new ManagerIdentifier(input));
       if (!_manager)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Failed to find manager`,
         });
-      const clock = _manager.request(input as ClockLookup);
+      const clock = _manager.request(new ClockIdentifier(input));
       if (!clock)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -182,13 +189,13 @@ export function getClockRouter(
     current: trpc.procedure
       .input(z.string())
       .subscription(async ({ input }) => {
-        const _manager = await manager(input as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        const clock = _manager.request(input as ClockLookup);
+        const clock = _manager.request(new ClockIdentifier(input));
         if (!clock)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -215,13 +222,13 @@ export function getClockRouter(
         });
       }),
     config: trpc.procedure.input(z.string()).subscription(async ({ input }) => {
-      const _manager = await manager(input as ClockLookup);
+      const _manager = await manager(new ManagerIdentifier(input));
       if (!_manager)
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Failed to find manager`,
         });
-      const clock = _manager.request(input as ClockLookup);
+      const clock = _manager.request(new ClockIdentifier(input));
       if (!clock)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -253,13 +260,13 @@ export function getClockRouter(
       .input(z.object({ lookup: z.string() }).passthrough())
       .output(z.void())
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
             message: `Failed to find manager`,
           });
-        const clock = _manager.request(input.lookup as ClockLookup);
+        const clock = _manager.request(new ClockIdentifier(input.lookup));
         if (!clock)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -278,9 +285,7 @@ export function getClockRouter(
         })
       )
       .subscription(async ({ input }) => {
-        const _manager = await manager(
-          `video:video:${input.lookup}:unknown:unknown`
-        );
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -314,7 +319,7 @@ export function getClockRouter(
           .passthrough()
       )
       .mutation(async ({ input }) => {
-        const _manager = await manager(input.lookup as ClockLookup);
+        const _manager = await manager(new ManagerIdentifier(input.lookup));
         if (!_manager)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -330,11 +335,11 @@ export function getClockRouter(
           });
         void _manager.dispatch(
           { type: MessageClockList, handler: "event" },
-          _manager.id()
+          _manager.identifier()
         );
       }),
     remove: trpc.procedure.input(z.string()).mutation(async ({ input }) => {
-      const _manager = await manager(input as ClockLookup);
+      const _manager = await manager(new ManagerIdentifier(input));
       if (!_manager)
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -347,9 +352,43 @@ export function getClockRouter(
         });
       void _manager.dispatch(
         { type: MessageClockList, handler: "event" },
-        _manager.id()
+        _manager.identifier()
       );
     }),
+    chapters: trpc.procedure
+      .input(z.string())
+      .subscription(async ({ input }) => {
+        const _manager = await manager(new ManagerIdentifier(input));
+        if (!_manager)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Failed to find manager`,
+          });
+        return observable<string[]>((emit) => {
+          const onUpdate = async (ret: DispatchReturn) => {
+            if (ret.ret.toString() === input) {
+              const chapters = await (
+                await _manager.chapters(new ClockIdentifier(input))
+              ).map<string>((chapter: ClockIdentifier) => chapter.toString());
+              emit.next(chapters);
+            }
+          };
+          onUpdate({
+            type: MessageClockChapter,
+            ret: new ClockIdentifier(input),
+          });
+          _manager.listen(
+            { type: MessageClockChapter, handler: "event" },
+            onUpdate
+          );
+          return () => {
+            _manager.stopListening(
+              { type: MessageClockChapter, handler: "event" },
+              onUpdate
+            );
+          };
+        });
+      })
   });
   return router;
 }
