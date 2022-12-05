@@ -146,6 +146,11 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         { type: MessageClockCue, handler: "notify" },
         this.identifier()
       );
+      await (
+        await this.chapters()
+      ).forEach((chapter: ClockIdentifier) => {
+        this.m_manager.cue(chapter);
+      });
       this.m_lockInput = false;
       this.m_manager.cueLock(
         `${this.identifier().id}:${this.identifier().type}`,
@@ -171,6 +176,11 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         { type: MessageClockUncue, handler: "notify" },
         this.identifier()
       );
+      await (
+        await this.chapters()
+      ).forEach((chapter: ClockIdentifier) => {
+        this.m_manager.uncue(chapter);
+      });
       this.m_lockInput = false;
       return await AsyncUtils.booleanReturn(true);
     }

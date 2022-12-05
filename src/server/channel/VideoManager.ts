@@ -49,21 +49,13 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
   async cue(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
-    const cued = await clock.cue();
-    const chapters = await this.chapters(id);
-    chapters.forEach(
-      async (cid: ClockIdentifier) => void (await this.cue(cid))
-    );
-    return cued;
+    return await clock.cue();
   }
 
   async uncue(id: ClockIdentifier): Promise<boolean> {
     const clock = this.request(id);
     if (!clock) return await AsyncUtils.booleanReturn(false);
-    const uncued = await clock.uncue();
-    const chapters = await this.chapters(id);
-    chapters.forEach(async (cid: ClockIdentifier) => this.uncue(cid));
-    return uncued;
+    return await clock.uncue();
   }
 
   async play(id: ClockIdentifier): Promise<boolean> {

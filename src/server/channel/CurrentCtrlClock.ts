@@ -7,6 +7,7 @@ import {
   FrameRate,
   MessageClockCurrent,
   MessageClockData,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { VideoManager } from "./VideoManager.js";
@@ -156,20 +157,27 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
   async _update(): Promise<void> {
     const currentId = this.m_manager.current().id;
     if (currentId) {
+      this.m_switchTimer = 0;
       if (currentId.toString() !== this.m_currentId?.toString()) {
         void (await this.uncue());
         this.m_currentId = currentId;
         void (await this.cue());
       }
     } else {
-      this.m_currentId = undefined;
+      if (this.m_switchTimer >= 500) this.m_currentId = undefined;
+      else this.m_switchTimer++;
     }
+
     void this.m_manager.dispatch(
       { type: MessageClockCurrent, handler: "event" },
       this.identifier()
     );
     await this.m_manager.dispatch(
       { type: MessageClockData, handler: "event" },
+      this.identifier()
+    );
+    await this.m_manager.dispatch(
+      { type: MessageClockChapter, handler: "event" },
       this.identifier()
     );
   }
@@ -179,4 +187,5 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
   }
   private m_manager: VideoManager;
   private m_currentId: ClockIdentifier | undefined;
+  private m_switchTimer: number = 0;
 }

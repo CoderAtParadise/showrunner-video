@@ -34,6 +34,7 @@ import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
+import { ChapterComponent } from "./ChapterComponent";
 
 export class DisplayCurrentControlComponent
   extends Component<{ id: ClockIdentifier; manager: ClientManagerComponent }>
@@ -280,6 +281,16 @@ export class DisplayCurrentControlComponent
           </span>
         </div>
         <SeekBarComponent className={styles.seek} clock={this} />
+        <div className={styles.chapters}>
+          {this.state.chapters.map((value: ClockIdentifier,index:number) => (
+            <ChapterComponent
+              key={value.toString()}
+              clock={value}
+              index={index}
+              manager={this.m_manager}
+            />
+          ))}
+        </div>
         {(() => {
           if (this.m_manager.tally().rehearsal) return this.rehearsal();
           if (this.m_manager.tally().program) return this.program();

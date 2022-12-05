@@ -175,3 +175,9 @@
   margin: auto;
   user-select: none;
 }
+
+.chapters {
+  height: 3em;
+  width: 90%;
+  margin: auto;
+}

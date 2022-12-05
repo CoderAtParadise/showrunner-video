@@ -153,8 +153,7 @@ export class ClientManagerComponent
         <div className={styles.videos}>
           <p />
           <VerticalScrollable className={styles.scrollable}>
-            {this.list().map((id: ClockLookup) => {
-              console.log(id);
+            {this.list("ampvideoctrl").map((id: ClockLookup) => {
               const identifier = new ClockIdentifier(id);
               return identifier.type() !== "current" ? (
                 <Fragment key={id}>
@@ -246,11 +245,18 @@ export class ClientManagerComponent
     return this.state.videos.get(id.toString());
   }
 
-  list(): ClockLookup[] {
-    return Array.from(this.state.videos.keys());
+  list(filter: string | string[]): ClockLookup[] {
+    if (filter.length === 0) return Array.from(this.state.videos.keys());
+    return Array.from(this.state.videos.keys()).filter((key) => {
+      const type = new ClockIdentifier(key).type();
+      if (filter as string) return type === filter;
+      else if (filter as string[]) {
+        (filter as string[]).forEach((s) => type === s);
+      }
+    });
   }
 
-  add(clock: IClockSource): boolean {
+  add(clock: IClockSource<any>): boolean {
     this.state.videos.set(
       clock.identifier().toString(),
       clock as ClientClockSourceComponent

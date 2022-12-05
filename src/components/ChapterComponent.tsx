@@ -1,3 +1,5 @@
+//@ts-ignore
+import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import {
   BaseClockConfig,
   ChapterSettings,
@@ -6,6 +8,12 @@ import {
   FrameRate,
   IClockManager,
   IClockSource,
+  MessageClockCommand,
+  MessageClockConfig,
+  MessageClockCurrent,
+  MessageClockData,
+  MessageClockSetTime,
+  MessageClockUpdateConfig,
   SMPTE,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
@@ -14,15 +22,31 @@ import {
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
-import { Component } from "react";
+//@ts-ignore
+import { CurrentDurationComponent } from "@coderatparadise/showrunner-time/extension";
+import { Component, HTMLAttributes } from "react";
+import styles from "../styles/Chapter.module.css";
 
 export class ChapterComponent
-  extends Component<{ id: ClockIdentifier; manager: IClockManager }>
+  extends Component<
+    HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: IClockManager;
+      index: number;
+    }
+  >
   implements IClockSource<ChapterSettings>
 {
-  constructor(props: { id: ClockIdentifier; manager: IClockManager }) {
+  constructor(
+    props: HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: IClockManager;
+      index: number;
+    }
+  ) {
     super(props);
-    this.m_id = props.id;
+    this.m_id = props.clock;
+    this.index = props.index;
     this.m_manager = props.manager;
     this.state = {
       currentState: undefined,
@@ -37,7 +61,34 @@ export class ChapterComponent
   }
 
   render() {
-    return <div />;
+    const position = 100 - (this.current().frameCount() / this.duration().frameCount()) * 100;
+    return (
+      <div className={`${this.props.className} ${styles.progressContainer}`}>
+        <div className={`${styles.progressEmpty}`}>
+          <div className={styles.floating}>
+            <span className={styles.index}>{this.index+1}</span>
+            <CurrentDurationComponent
+              className={styles.time}
+              clock={this}
+              show="duration"
+            />
+          </div>
+        </div>
+        <div
+          className={`${styles.progressComplete}`}
+          style={{ width: `${position}%` }}
+        >
+          <div className={styles.floating}>
+            <span className={styles.index}>{this.index+1}</span>
+            <CurrentDurationComponent
+              className={styles.time}
+              clock={this}
+              show="duration"
+            />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   config(): BaseClockConfig & ChapterSettings {
@@ -90,15 +141,101 @@ export class ChapterComponent
     }
   }
 
+  async cue(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async uncue(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async play(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async pause(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async stop(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async recue(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async setTime(time: SMPTE): Promise<boolean> {
+    const settime = await this.m_manager.dispatch(
+      { type: MessageClockSetTime, handler: "network" },
+      this.identifier(),
+      time
+    );
+
+    if (settime.type === MessageClockCommand) return settime.ret as boolean;
+    return await AsyncUtils.booleanReturn(false);
+  }
+
+  async chapters(): Promise<ClockIdentifier[]> {
+    return AsyncUtils.typeReturn<ClockIdentifier[]>([]);
+  }
+
+  async addChapter(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(): Promise<boolean> {
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  _sortChapters(): void {
+    //NOOP
+  }
+
   data(): object {
     return this.state.additional?.data || {};
   }
 
+  async updateConfig(
+    newConfig: BaseClockConfig & ChapterSettings,
+    local?: boolean | undefined
+  ): Promise<void> {
+    this.setState({ config: newConfig });
+    if (!local) {
+      await this.m_manager.dispatch(
+        { type: MessageClockUpdateConfig, handler: "network" },
+        this.identifier(),
+        newConfig
+      );
+    }
+    return await AsyncUtils.voidReturn();
+  }
+
   async _update(): Promise<void> {
-    //NOOP
+    await this.m_manager.dispatch(
+      { type: MessageClockData, handler: "network" },
+      this.identifier()
+    );
+    await this.m_manager.dispatch(
+      { type: MessageClockCurrent, handler: "network" },
+      this.identifier()
+    );
+    await this.m_manager.dispatch(
+      { type: MessageClockConfig, handler: "network" },
+      this.identifier()
+    );
+  }
+
+  _syncState(newState: CurrentClockState): void {
+    this.setState({ currentState: newState });
+  }
+
+  _syncData(data: AdditionalData): void {
+    this.setState({ additional: data });
   }
 
   private m_id: ClockIdentifier;
+  private index: number;
   private m_manager: IClockManager;
   state: {
     currentState: CurrentClockState | undefined;

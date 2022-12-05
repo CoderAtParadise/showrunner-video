@@ -138,6 +138,8 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
         if (!vdata) return;
         vdata.status = ClockStatus.CUED;
         this.m_current.id = currentId;
+        clearTimeout(this.m_resetTimeout);
+        this.m_resetTimeout = undefined;
       }
       const rawTimecode = (cTime.data as { timecode: string }).timecode;
       let currentTime: SMPTE = new SMPTE(0, this.m_manager.frameRate());
@@ -179,9 +181,14 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
         this.m_current.raw = rawTimecode;
       }
     } else {
-      this.m_current.id = "";
-      this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
-      this.m_current.raw = "";
+      if (this.m_resetTimeout !== undefined) {
+        this.m_resetTimeout = setTimeout(() => {
+          console.log("Resetting");
+          this.m_current.id = "";
+          this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
+          this.m_current.raw = "";
+        }, 500);
+      }
     }
     return await AsyncUtils.voidReturn();
   }
@@ -206,9 +213,12 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             byteCount: ["4"],
           })
         )
+        {
+          console.log(cDuration);
           return await AsyncUtils.typeReturn(
             (cDuration.data as { timecode: string }).timecode
           );
+        }
       }
       return await AsyncUtils.typeReturn("00:00:00:00");
     };
@@ -261,6 +271,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
       if (allVideos.length > 0) {
         for (const id of allVideos) {
           const timecode = await getDuration(id);
+          console.log(`${id}:${timecode}`);
           let duration: SMPTE;
           try {
             duration = new SMPTE(timecode, this.m_manager.frameRate());
@@ -317,7 +328,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   private m_connectionInfo: AmpConnection;
   private m_source: AmpChannel;
   private m_cuedRemove: { id: string; time: number }[] = [];
-  private m_lastId: { id: string; time: number } = { id: "", time: 0 };
+  private m_resetTimeout: any | undefined = undefined;
   private m_current: { id: string; time: SMPTE; raw: string } = {
     id: "",
     time: new SMPTE(),
