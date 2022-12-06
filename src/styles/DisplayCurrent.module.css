@@ -135,11 +135,16 @@
   transform: scale(2);
 }
 
-.seek {
+.seek,
+.chapter {
   width: 90%;
   margin: auto;
   user-select: none;
-  padding-bottom: 5px;
+}
+
+.chapter {
+  margin-top: -5px;
+  margin-bottom: 5px;
 }
 
 .onaircontainer {
@@ -180,4 +185,6 @@
   height: 3em;
   width: 90%;
   margin: auto;
+  margin-top: 20px;
+  margin-bottom: 0px;
 }

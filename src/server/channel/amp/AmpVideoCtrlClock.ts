@@ -77,7 +77,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     const data: AmpVideoData = this.m_manager
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
-    return this.m_sourceId !== "" ? data.name : "Unknown Source";
+    return this.m_sourceId !== "" && data ? data.name : "Unknown Source";
   }
 
   current(): SMPTE {

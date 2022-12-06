@@ -18,6 +18,10 @@ const handle = app.getRequestHandler();
 import EventEmitter from "events";
 import multicast from "multicast-dns";
 import ip from "ip";
+//@ts-ignore
+import { registerCodec } from "@coderatparadise/showrunner-network/codec";
+import { AmpConnectionCodec } from "./channel/amp/AmpConnectionCodec";
+import { CodecDataCurrent } from "./channel/codec/CodecDataCurrent";
 EventEmitter.setMaxListeners(0); // We add event listeners for every subscription is this wise proabably not but ehh we are doing it and that is why we uncue videos
 if (!process.env.DOCKER_ENV) {
   const mdns = multicast();
@@ -52,6 +56,8 @@ if (!process.env.DOCKER_ENV) {
 
 app.prepare().then(() => {
   Codec.registerCodecs();
+  registerCodec("connection:amp", AmpConnectionCodec);
+  registerCodec("sync_clock_data_current", CodecDataCurrent);
   loadChannels();
   const server = http.createServer((req, res) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

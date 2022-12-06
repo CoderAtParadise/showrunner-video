@@ -61,14 +61,20 @@ export class ChapterComponent
   }
 
   render() {
-    const position = 100 - (this.current().frameCount() / this.duration().frameCount()) * 100;
+    const position =
+      100 - (this.current().frameCount() / this.duration().frameCount()) * 100;
     return (
-      <div className={`${this.props.className} ${styles.progressContainer}`}>
+      <div
+        className={`${this.props.className} ${styles.progressContainer}`}
+        data-active={this.status() === ClockStatus.PAUSED}
+      >
         <div className={`${styles.progressEmpty}`}>
           <div className={styles.floating}>
-            <span className={styles.index}>{this.index+1}</span>
+            <span className={styles.index}>{this.index + 1}</span>
             <CurrentDurationComponent
-              className={styles.time}
+              className={`${styles.time} ${
+                this.status() === ClockStatus.PAUSED ? styles.active : ""
+              }`}
               clock={this}
               show="duration"
             />
@@ -79,9 +85,11 @@ export class ChapterComponent
           style={{ width: `${position}%` }}
         >
           <div className={styles.floating}>
-            <span className={styles.index}>{this.index+1}</span>
+            <span className={styles.index}>{this.index + 1}</span>
             <CurrentDurationComponent
-              className={styles.time}
+              className={`${styles.time} ${
+                this.status() === ClockStatus.PAUSED ? styles.active : ""
+              }`}
               clock={this}
               show="duration"
             />

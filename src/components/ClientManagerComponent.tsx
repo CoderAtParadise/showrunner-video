@@ -142,10 +142,10 @@ export class ClientManagerComponent
           <DisplayCurrentControlComponent
             key={new ClockIdentifier(
               this.identifier(),
-              "current",
+              "video",
               "current"
             ).toString()}
-            id={new ClockIdentifier(this.identifier(), "current", "current")}
+            clock={new ClockIdentifier(this.identifier(), "video", "current")}
             manager={this}
           />
         </div>
@@ -157,7 +157,7 @@ export class ClientManagerComponent
               const identifier = new ClockIdentifier(id);
               return identifier.type() !== "current" ? (
                 <Fragment key={id}>
-                  <ClientClockSourceComponent id={identifier} manager={this} />
+                  <ClientClockSourceComponent clock={identifier} manager={this} />
                   <p />
                 </Fragment>
               ) : null;

@@ -1,13 +1,13 @@
-.container {
-  border: solid 2px;
-  border-color: #fbb03b;
-  background-color: #000000;
-}
-
 .progressContainer {
   width: 7em;
   height: 2em;
+  border: solid 2px;
+  border-color: #999999;
   position: relative;
+}
+
+.progressContainer[data-active="true"] {
+  border-color: #fbb03b;
 }
 
 .progressComplete,
@@ -67,4 +67,8 @@
   margin: 0;
   width: 1.2em;
   height: 1.2em;
+}
+
+.active {
+  color: #fbb03b;
 }

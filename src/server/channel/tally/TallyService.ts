@@ -44,3 +44,5 @@
 //   //   private m_source;
 //   private m_connectionInfo: TallyConnection;
 // }
+
+export {};

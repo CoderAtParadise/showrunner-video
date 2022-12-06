@@ -29,24 +29,31 @@ import {
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
-import { Component } from "react";
+import { Component, HTMLAttributes } from "react";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 import { ChapterComponent } from "./ChapterComponent";
+import { CurrentChapterComponent } from "./CurrentChapterComponent";
 
 export class DisplayCurrentControlComponent
-  extends Component<{ id: ClockIdentifier; manager: ClientManagerComponent }>
+  extends Component<
+    HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: ClientManagerComponent;
+    }
+  >
   implements IClockSource<unknown>
 {
-  constructor(props: {
-    className?: string;
-    id: ClockIdentifier;
-    manager: ClientManagerComponent;
-  }) {
+  constructor(
+    props: HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: ClientManagerComponent;
+    }
+  ) {
     super(props);
-    this.m_id = props.id;
+    this.m_id = props.clock;
     this.m_manager = props.manager;
     this.state = {
       currentState: undefined,
@@ -98,6 +105,7 @@ export class DisplayCurrentControlComponent
               alt="Recue"
               width={48}
               height={48}
+              priority
               style={{ transform: "scale(0.9,1.2)" }}
             />
           </div>
@@ -112,6 +120,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/play.svg"
                 alt="Play"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -128,6 +137,7 @@ export class DisplayCurrentControlComponent
             <Image
               src="/pause.svg"
               alt="Pause"
+              priority
               width={48}
               height={48}
               style={{ transform: "scale(0.9,1.2)" }}
@@ -152,6 +162,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/fast_rewind.svg"
                 alt="Fast Rewind"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -177,6 +188,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/fast_forward.svg"
                 alt="Fast Forward"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -201,6 +213,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/skip_next.svg"
                 alt="Skip Next"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -219,6 +232,7 @@ export class DisplayCurrentControlComponent
           <Image
             src="/play.svg"
             alt="Play"
+            priority
             width={48}
             height={48}
             style={{ transform: "scale(1.4)" }}
@@ -242,6 +256,7 @@ export class DisplayCurrentControlComponent
           <Image
             src="/skip_previous.svg"
             alt="Recue"
+            priority
             width={48}
             height={48}
             style={{ transform: "scale(0.9,1.2)" }}
@@ -258,6 +273,7 @@ export class DisplayCurrentControlComponent
             <Image
               src="/play.svg"
               alt="Play"
+              priority
               width={48}
               height={48}
               style={{ transform: "scale(1.4)" }}
@@ -281,8 +297,14 @@ export class DisplayCurrentControlComponent
           </span>
         </div>
         <SeekBarComponent className={styles.seek} clock={this} />
+        <CurrentChapterComponent
+          owner={this}
+          className={styles.chapter}
+          manager={this.m_manager}
+          clock={new ClockIdentifier(this.identifier(), "chapter", "current")}
+        />
         <div className={styles.chapters}>
-          {this.state.chapters.map((value: ClockIdentifier,index:number) => (
+          {this.state.chapters.map((value: ClockIdentifier, index: number) => (
             <ChapterComponent
               key={value.toString()}
               clock={value}
@@ -479,7 +501,6 @@ export class DisplayCurrentControlComponent
   }
 
   _syncData(data: AdditionalData): void {
-    data.data = JSON.parse(data.data as unknown as string);
     this.setState({ additional: data });
   }
 

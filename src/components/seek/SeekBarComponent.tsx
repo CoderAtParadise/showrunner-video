@@ -59,10 +59,10 @@ export const SeekBarComponent = (props: {
       >
         <div
           ref={hoverRef}
-          className={`${props.className} ${styles.progressEmpty}`}
+          className={styles.progressEmpty}
         >
           <div
-            className={`${styles.progressComplete}`}
+            className={styles.progressComplete}
             style={{ width: `${position}%` }}
           />
         </div>

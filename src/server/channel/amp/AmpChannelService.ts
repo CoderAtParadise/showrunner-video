@@ -145,6 +145,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
       let currentTime: SMPTE = new SMPTE(0, this.m_manager.frameRate());
       try {
         currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
+        if (currentTime.frameCount() === -1) return;
       } catch (err) {
         const date = new Date();
         const time =
@@ -187,7 +188,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
           this.m_current.id = "";
           this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
           this.m_current.raw = "";
-        }, 500);
+        }, 8);
       }
     }
     return await AsyncUtils.voidReturn();
@@ -213,12 +214,9 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             byteCount: ["4"],
           })
         )
-        {
-          console.log(cDuration);
           return await AsyncUtils.typeReturn(
             (cDuration.data as { timecode: string }).timecode
           );
-        }
       }
       return await AsyncUtils.typeReturn("00:00:00:00");
     };
@@ -271,7 +269,6 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
       if (allVideos.length > 0) {
         for (const id of allVideos) {
           const timecode = await getDuration(id);
-          console.log(`${id}:${timecode}`);
           let duration: SMPTE;
           try {
             duration = new SMPTE(timecode, this.m_manager.frameRate());
@@ -319,11 +316,14 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     setInterval(() => {
       if (this.isOpen()) void this.pollVideoData();
     }, 1000);
-    setInterval(() => {
-      if (this.isOpen()) void this.pollCurrentInfo();
-    }, 1000 / this.m_manager.frameRate());
+    setInterval(async () => {
+      if (this.isOpen() && this.m_previousFrameComplete) {
+        void (await this.pollCurrentInfo());
+      }
+    }, 1000 / this.m_manager.frameRate() * 2);
   }
 
+  private m_previousFrameComplete: boolean = true;
   private m_id: string;
   private m_connectionInfo: AmpConnection;
   private m_source: AmpChannel;

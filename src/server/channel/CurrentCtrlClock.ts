@@ -22,11 +22,7 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
   }
 
   identifier(): ClockIdentifier {
-    return new ClockIdentifier(
-      this.m_manager.identifier(),
-      "current",
-      "current"
-    );
+    return new ClockIdentifier(this.m_manager.identifier(), "video", "current");
   }
 
   config(): BaseClockConfig & unknown {
@@ -78,7 +74,9 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
   current(): SMPTE {
     if (this.m_currentId) {
       const clock = this.m_manager.request(this.m_currentId);
-      if (clock) return clock.current();
+      if (clock) {
+        return clock.current();
+      }
     }
     return new SMPTE();
   }

@@ -9,6 +9,8 @@ import {
   wsLink,
 } from "@trpc/client";
 
+const port = process.env.NODE_ENV === "production" ? 3000 : 3001;
+
 export function getEndingLink() {
   if (typeof window === `undefined`) {
     return splitLink({
@@ -16,15 +18,15 @@ export function getEndingLink() {
         return op.context.skipBatch === true;
       },
       true: httpLink({
-        url: `http://video-showrunner.local:3001/api/trpc`,
+        url: `http://video-showrunner.local:${port}/api/trpc`,
       }),
       false: httpBatchLink({
-        url: `http://video-showrunner.local:3001/api/trpc`,
+        url: `http://video-showrunner.local:${port}/api/trpc`,
         maxURLLength: 2083,
       }),
     });
   }
-  const client = createWSClient({ url: "ws://video-showrunner.local:3001" });
+  const client = createWSClient({ url: `ws://video-showrunner.local:${port}` });
   return wsLink<AppRouter>({ client });
 }
 

@@ -33,20 +33,19 @@ import {
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
 import styles from "../styles/ClientClockSource.module.css";
-import { Component } from "react";
+import { Component, HTMLAttributes } from "react";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 
 export class ClientClockSourceComponent
-  extends Component<{ id: ClockIdentifier; manager: IClockManager }>
+  extends Component<HTMLAttributes<HTMLDivElement> & { clock: ClockIdentifier; manager: IClockManager }>
   implements IClockSource<unknown>
 {
-  constructor(props: {
-    className?: string;
-    id: ClockIdentifier;
+  constructor(props: HTMLAttributes<HTMLDivElement> & {
+    clock: ClockIdentifier;
     manager: IClockManager;
   }) {
     super(props);
-    this.m_id = props.id;
+    this.m_id = props.clock;
     this.m_manager = props.manager;
     this.state = {
       currentState: undefined,
