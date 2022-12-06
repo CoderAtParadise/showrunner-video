@@ -21,7 +21,7 @@ type ChannelInfo = {
 export async function loadChannels(): Promise<void> {
   let fd;
   try {
-    fd = await fs.open("./channels.json");
+    fd = await fs.open("./data/channels.json");
     const channels = JSON.parse((await fd.readFile()).toString());
     for (const channel of channels) {
       const info = channel as ChannelInfo;
@@ -75,6 +75,6 @@ export async function saveChannels(): Promise<void> {
     });
   }
 
-  const file = fs.writeFile("./channels.json", JSON.stringify(buffer));
+  const file = fs.writeFile("./data/channels.json", JSON.stringify(buffer));
   await file;
 }

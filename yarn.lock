@@ -49,7 +49,7 @@ __metadata:
 
 "@coderatparadise/showrunner-time@file:../time::locator=%40coderatparadise%2Fshowrunner-video%40workspace%3A.":
   version: 0.3.0
-  resolution: "@coderatparadise/showrunner-time@file:../time#../time::hash=82d53a&locator=%40coderatparadise%2Fshowrunner-video%40workspace%3A."
+  resolution: "@coderatparadise/showrunner-time@file:../time#../time::hash=990be6&locator=%40coderatparadise%2Fshowrunner-video%40workspace%3A."
   dependencies:
     uuid: "npm:^9.0.0"
   peerDependencies:
@@ -61,7 +61,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 68112e9d031a445221009afa05510b9a444c19aae3f1b9928bd85bbe66e16865445284765237e186ab195c8be056132d5258d8d31ded1dccc953b69fce020c7c
+  checksum: 2e41f460edd710b93d526b41887b534fc61c9d67de6932a855bcfe4b5144250eb61fa07539a276563315007b70edbe4207adc27acb1f8387a1d3409cabb89796
   languageName: node
   linkType: hard
 

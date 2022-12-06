@@ -15,14 +15,14 @@ import {
   MessageClockStop,
   MessageClockUncue,
   MessageClockCue,
-  MessageClockChapter,
-  ChapterClock,
+  MessageClockChapter
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { VideoManager } from "../VideoManager.js";
 //@ts-ignore
 import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import { VideoCtrlData } from "../VideoCtrlData.js";
+import { saveChapters } from "../ChapterLoader.js";
 
 export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
   constructor(
@@ -33,12 +33,6 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     this.m_config = settings;
     this.m_manager = manager;
     this.m_sourceId = sourceId;
-    const defaultChapter = new ChapterClock(this.m_manager, this.identifier(), {
-      name: "End",
-      time: this.duration(),
-    });
-    this.m_manager.add(defaultChapter);
-    this.addChapter(defaultChapter.identifier());
   }
 
   frameRate(): FrameRate {
@@ -318,6 +312,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     ) {
       this.m_chapters.push(chapter);
       this._sortChapters();
+      await saveChapters(this,this.m_manager);
       return await AsyncUtils.booleanReturn(true);
     }
     return await AsyncUtils.booleanReturn(false);

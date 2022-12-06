@@ -7,6 +7,7 @@ import {
 } from "@coderatparadise/amp-grassvalley";
 import { VideoManager } from "../VideoManager.js";
 import {
+  ChapterClock,
   ClockDirection,
   ClockStatus,
   SMPTE,
@@ -23,6 +24,7 @@ import { AmpMetadata, extractId, extractMetadata } from "./AmpVideoMetadata";
 import { AmpVideoCtrlClock } from "./AmpVideoCtrlClock";
 //@ts-ignore
 import { ManagerIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
+import { loadChapters, saveChapters } from "../ChapterLoader.js";
 
 export type AmpVideoData = {
   id: string;
@@ -294,17 +296,29 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
               incorrectFramerate: duration!.hasIncorrectFrameRate(),
               status: ClockStatus.UNCUED,
             });
-            this.m_manager.add(
-              new AmpVideoCtrlClock(
-                {
-                  name: "",
-                  direction: ClockDirection.COUNTDOWN,
-                  playOnCue: false,
-                },
-                this.m_manager,
-                meta.id
-              )
+            const clock = new AmpVideoCtrlClock(
+              {
+                name: "",
+                direction: ClockDirection.COUNTDOWN,
+                playOnCue: false,
+              },
+              this.m_manager,
+              meta.id
             );
+            if (!(await loadChapters(clock, this.m_manager))) {
+              const defaultChapter = new ChapterClock(
+                this.m_manager,
+                clock.identifier(),
+                {
+                  name: "End",
+                  time: clock.duration(),
+                }
+              );
+              this.m_manager.add(defaultChapter);
+              clock.addChapter(defaultChapter.identifier());
+              saveChapters(clock, this.m_manager);
+            }
+            this.m_manager.add(clock);
           }
         }
       }
@@ -320,7 +334,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
       if (this.isOpen() && this.m_previousFrameComplete) {
         void (await this.pollCurrentInfo());
       }
-    }, 1000 / this.m_manager.frameRate() * 2);
+    }, (1000 / this.m_manager.frameRate()) * 2);
   }
 
   private m_previousFrameComplete: boolean = true;
