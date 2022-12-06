@@ -42,12 +42,9 @@ function extractOutMetadata(metadata: string | undefined,
     const time = metadata.match(
       /(?:out-((?:[012][0-9]).(?:[0-9]{2}).(?:[0-9]{2})(?:\.|,)(?:[0-9]{2})?))/
     );
-    console.log(time);
     if (time !== null) {
-      console.log(time);
       let fixed = time[1].split(/[.]/);
       fixed = fixed.join(":").split(/[,]/);
-      console.log(fixed);
       return [true, new SMPTE(fixed.join(),manager.frameRate())];
     }
   }

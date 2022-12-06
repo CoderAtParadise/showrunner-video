@@ -186,7 +186,6 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     } else {
       if (this.m_resetTimeout !== undefined) {
         this.m_resetTimeout = setTimeout(() => {
-          console.log("Resetting");
           this.m_current.id = "";
           this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
           this.m_current.raw = "";
