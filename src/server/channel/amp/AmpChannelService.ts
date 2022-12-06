@@ -289,7 +289,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
             return;
           }
-          const meta = extractMetadata(id, duration!);
+          const meta = extractMetadata(id, duration!, this.m_manager);
           if (!this.m_videoCache.has(meta.id)) {
             this.m_videoCache.set(meta.id, {
               ...meta,

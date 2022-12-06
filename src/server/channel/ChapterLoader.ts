@@ -36,7 +36,7 @@ export async function loadChapters(
         cdata.id
       );
       manager.add(chapter);
-      await clock.addChapter(chapter.identifier());
+      await clock.addChapter(chapter.identifier(), true);
     }
     return await AsyncUtils.booleanReturn(true);
   } catch (err) {

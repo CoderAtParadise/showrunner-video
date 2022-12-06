@@ -15,7 +15,7 @@ import {
   MessageClockStop,
   MessageClockUncue,
   MessageClockCue,
-  MessageClockChapter
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { VideoManager } from "../VideoManager.js";
@@ -304,7 +304,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     return await AsyncUtils.typeReturn<ClockIdentifier[]>(this.m_chapters);
   }
 
-  async addChapter(chapter: ClockIdentifier): Promise<boolean> {
+  async addChapter(
+    chapter: ClockIdentifier,
+    loading?: boolean
+  ): Promise<boolean> {
     if (
       !this.m_chapters.find(
         (id: ClockIdentifier) => id.toString() === chapter.toString()
@@ -312,7 +315,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     ) {
       this.m_chapters.push(chapter);
       this._sortChapters();
-      await saveChapters(this,this.m_manager);
+      if (loading) await saveChapters(this, this.m_manager);
       return await AsyncUtils.booleanReturn(true);
     }
     return await AsyncUtils.booleanReturn(false);
