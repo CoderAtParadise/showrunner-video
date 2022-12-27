@@ -167,13 +167,18 @@ export function getClockRouter(
           message: `Failed to find a clock with id: ${input}`,
         });
       return observable<Codec.AdditionalData>((emit) => {
-        const onUpdate = () => {
+        const onUpdate = (dispatch:DispatchReturn) => {
+          if(dispatch.ret.toString() === input) {
           const data = (
             codec.getCodec("sync_clock_data") as codec.Codec<IClockSource>
           ).serialize(clock) as Codec.AdditionalData;
           emit.next(data);
+          }
         };
-        onUpdate();
+        onUpdate({
+          type: MessageClockData,
+          ret: new ClockIdentifier(input),
+        });
         _manager?.listen(
           { type: MessageClockData, handler: "event" },
           onUpdate
@@ -202,13 +207,18 @@ export function getClockRouter(
             message: `Failed to find a clock with id: ${input}`,
           });
         return observable<Codec.CurrentClockState>((emit) => {
-          const onUpdate = () => {
+          const onUpdate = (dispatch:DispatchReturn) => {
+            if(dispatch.ret.toString() === input) {
             const data = (
               codec.getCodec("sync_clock_current") as codec.Codec<IClockSource>
             ).serialize(clock) as Codec.CurrentClockState;
             emit.next(data);
+            }
           };
-          onUpdate();
+          onUpdate({
+            type: MessageClockCurrent,
+            ret: new ClockIdentifier(input),
+          });
           _manager.listen(
             { type: MessageClockCurrent, handler: "event" },
             onUpdate
@@ -236,13 +246,18 @@ export function getClockRouter(
         });
       return observable<BaseClockConfig & unknown>((emit) => {
         /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
-        const onUpdate = () => {
+        const onUpdate = (dispatch:DispatchReturn) => {
+          if(dispatch.ret.toString() === input) {
           const data = (
             codec.getCodec("sync_clock_config") as codec.Codec<IClockSource>
           ).serialize(clock) as BaseClockConfig & unknown;
           emit.next(data);
+          }
         };
-        onUpdate();
+        onUpdate({
+          type: MessageClockConfig,
+          ret: new ClockIdentifier(input),
+        });
         /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
         _manager.listen(
           { type: MessageClockConfig, handler: "event" },

@@ -80,7 +80,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       current.id?.id() !== this.m_sourceId ||
       this.m_status === ClockStatus.UNCUED
     )
-      return new SMPTE();
+      return SMPTE.INVALID;
     return current.time;
   }
 
@@ -89,7 +89,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
     if (data !== undefined) return data.out;
-    else return new SMPTE();
+    else return SMPTE.INVALID;
   }
 
   async cue(): Promise<boolean> {

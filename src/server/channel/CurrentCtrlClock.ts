@@ -78,7 +78,7 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
         return clock.current();
       }
     }
-    return new SMPTE();
+    return SMPTE.INVALID;
   }
 
   duration(): SMPTE {
@@ -86,7 +86,7 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
       const clock = this.m_manager.request(this.m_currentId);
       if (clock) return clock.duration();
     }
-    return new SMPTE();
+    return SMPTE.INVALID;
   }
 
   async cue(): Promise<boolean> {
@@ -160,6 +160,14 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
         void (await this.uncue());
         this.m_currentId = currentId;
         void (await this.cue());
+        await this.m_manager.dispatch(
+          { type: MessageClockData, handler: "event" },
+          this.identifier()
+        );
+        await this.m_manager.dispatch(
+          { type: MessageClockChapter, handler: "event" },
+          this.identifier()
+        );
       }
     } else {
       if (this.m_switchTimer >= 500) this.m_currentId = undefined;
@@ -168,14 +176,6 @@ export class CurrentCtrlClock implements IClockSource<unknown> {
 
     void this.m_manager.dispatch(
       { type: MessageClockCurrent, handler: "event" },
-      this.identifier()
-    );
-    await this.m_manager.dispatch(
-      { type: MessageClockData, handler: "event" },
-      this.identifier()
-    );
-    await this.m_manager.dispatch(
-      { type: MessageClockChapter, handler: "event" },
       this.identifier()
     );
   }

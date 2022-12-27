@@ -70,7 +70,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     retryHandler: (tryCounter: number) => Promise<boolean>
   ): Promise<boolean> {
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     const open = await this.m_source.open(retryHandler);
     if (open) this.update();
     return open;
@@ -83,14 +83,14 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   async close(): Promise<boolean> {
     this.m_source?.close(false);
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     return await AsyncUtils.booleanReturn(true);
   }
 
   async restart(): Promise<boolean> {
     this.m_source?.close(true);
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     return await AsyncUtils.booleanReturn(false);
   }
 
@@ -219,7 +219,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             (cDuration.data as { timecode: string }).timecode
           );
       }
-      return await AsyncUtils.typeReturn("00:00:00:00");
+      return await AsyncUtils.typeReturn(SMPTE.ZERO.toString());
     };
     if (
       returnCodeMatches(Return.IDListing, cFirstId.code, { byteCount: ["A"] })
@@ -344,7 +344,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   private m_resetTimeout: any | undefined = undefined;
   private m_current: { id: string; time: SMPTE; raw: string } = {
     id: "",
-    time: new SMPTE(),
+    time: SMPTE.INVALID,
     raw: "",
   };
 

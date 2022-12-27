@@ -20,9 +20,19 @@ export const CodecDataCurrent: Codec<{
     currentId: ClockIdentifier;
     owner?: ClockIdentifier;
   } {
-    return json as {
-      currentId: ClockIdentifier;
-      owner?: ClockIdentifier;
+    const jo = json as {
+      currentId: string;
+      owner?: string;
     };
+    if (jo.owner)
+      return {
+        currentId: new ClockIdentifier(jo.currentId),
+        owner: new ClockIdentifier(jo.owner),
+      };
+    else {
+      return {
+        currentId: new ClockIdentifier(jo.currentId),
+      };
+    }
   },
 };

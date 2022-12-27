@@ -100,7 +100,7 @@ export class ChapterComponent
   }
 
   config(): BaseClockConfig & ChapterSettings {
-    return this.state.config || { name: "", time: new SMPTE() };
+    return this.state.config || { name: "", time: SMPTE.INVALID };
   }
 
   frameRate(): FrameRate {
@@ -130,7 +130,7 @@ export class ChapterComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -145,7 +145,7 @@ export class ChapterComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 

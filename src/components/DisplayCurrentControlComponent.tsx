@@ -29,13 +29,14 @@ import {
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
-import { Component, HTMLAttributes } from "react";
+import { Component, Fragment, HTMLAttributes } from "react";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 import { ChapterComponent } from "./ChapterComponent";
 import { CurrentChapterComponent } from "./CurrentChapterComponent";
+import { HorizontalCarousel } from "./carousel/HorizontalCarousel";
 
 export class DisplayCurrentControlComponent
   extends Component<
@@ -151,7 +152,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.current()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .subtract(new SMPTE("00:00:15:00"), true)
@@ -176,7 +177,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.current()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .add(new SMPTE("00:00:15:00"), true)
@@ -201,7 +202,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.duration()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .subtract(new SMPTE("00:00:20:00"), true)
@@ -299,20 +300,25 @@ export class DisplayCurrentControlComponent
         <SeekBarComponent className={styles.seek} clock={this} />
         <CurrentChapterComponent
           owner={this}
-          className={styles.chapter}
+          className={styles.currentchapter}
           manager={this.m_manager}
           clock={new ClockIdentifier(this.identifier(), "chapter", "current")}
         />
-        <div className={styles.chapters}>
+        <HorizontalCarousel
+          className={styles.chapters}
+          activeIndex={this._getCurrentIndex.bind(this)}
+        >
           {this.state.chapters.map((value: ClockIdentifier, index: number) => (
-            <ChapterComponent
-              key={value.toString()}
-              clock={value}
-              index={index}
-              manager={this.m_manager}
-            />
+            <Fragment key={value.toString()}>
+              <ChapterComponent
+                className={styles.chapter}
+                clock={value}
+                index={index}
+                manager={this.m_manager}
+              />
+            </Fragment>
           ))}
-        </div>
+        </HorizontalCarousel>
         {(() => {
           if (this.m_manager.tally().rehearsal) return this.rehearsal();
           if (this.m_manager.tally().program) return this.program();
@@ -353,7 +359,7 @@ export class DisplayCurrentControlComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -368,7 +374,7 @@ export class DisplayCurrentControlComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -534,6 +540,22 @@ export class DisplayCurrentControlComponent
       this.identifier()
     );
     return await AsyncUtils.voidReturn();
+  }
+
+  _getCurrentIndex() {
+    if (this.m_manager) {
+      const current = this.m_manager.request(
+        new ClockIdentifier(this.identifier(), "chapter", "current")
+      );
+      if (current) {
+        const currentId = (current.data() as { currentId: string }).currentId;
+        const index = this.state.chapters.findIndex(
+          (value: ClockIdentifier) => value.toString() === currentId
+        );
+        if (index !== -1) return index;
+      }
+    }
+    return 0;
   }
 
   private m_id: ClockIdentifier;

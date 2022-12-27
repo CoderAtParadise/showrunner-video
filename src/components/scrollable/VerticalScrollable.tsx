@@ -142,17 +142,18 @@ export const VerticalScrollable = (props: {
     >
       <div
         ref={scrollHostRef}
-        className={`${styles.scrollHost} ${props.className}`}
+        data-type="vertical"
+        className={`${styles.scrollHost}`}
       >
         {props.children}
       </div>
       <div
-        className={`${props.className} ${styles.scrollbar}`}
+        className={styles.scrollbar}
         data-type="vertical"
         data-hovering={(hovering && shouldDisplayScroll()) || isDragging}
       >
         <div
-          className={`${styles.scrollThumb} ${props.className}`}
+          className={styles.scrollThumb}
           data-type={`vertical`}
           style={thumbStyle}
           onMouseDown={handleScrollThumbMouseDown}

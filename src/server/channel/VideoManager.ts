@@ -246,7 +246,7 @@ export class VideoManager implements IClockManager<VideoCtrlData | unknown> {
         };
       }
     }
-    return { id: undefined, time: new SMPTE() };
+    return { id: undefined, time: SMPTE.INVALID };
   }
 
   setRehearsalMode(rehearsal: boolean): void {

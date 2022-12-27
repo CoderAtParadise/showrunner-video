@@ -136,13 +136,13 @@
 }
 
 .seek,
-.chapter {
+.currentchapter {
   width: 90%;
   margin: auto;
   user-select: none;
 }
 
-.chapter {
+.currentchapter {
   margin-top: -5px;
   margin-bottom: 5px;
 }
@@ -185,6 +185,9 @@
   height: 3em;
   width: 90%;
   margin: auto;
-  margin-top: 20px;
-  margin-bottom: 0px;
+  padding-top: 5px;
+}
+
+.chapter {
+  
 }

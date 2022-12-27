@@ -7,7 +7,6 @@ import {
   FrameRate,
   MessageClockCurrent,
   MessageClockData,
-  MessageClockConfig,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { VideoManager } from "./VideoManager.js";
@@ -80,7 +79,7 @@ export class CurrentChapterClock implements IClockSource<unknown> {
       const clock = this.m_manager.request(this.m_currentId);
       if (clock) return clock.current();
     }
-    return new SMPTE();
+    return SMPTE.INVALID;
   }
 
   duration(): SMPTE {
@@ -88,7 +87,7 @@ export class CurrentChapterClock implements IClockSource<unknown> {
       const clock = this.m_manager.request(this.m_currentId);
       if (clock) return clock.duration();
     }
-    return new SMPTE();
+    return SMPTE.INVALID;
   }
 
   async cue(): Promise<boolean> {
@@ -153,28 +152,24 @@ export class CurrentChapterClock implements IClockSource<unknown> {
     if (currentOwner) {
       if (currentOwner.toString() !== this.m_currentOwner?.toString())
         this.m_currentOwner = currentOwner;
-      const chapters = await this.m_manager.chapters(currentOwner);
+      const chapters = await this.m_manager.chapters(this.m_currentOwner);
       for (const cid of chapters) {
         const chapter = await this.m_manager.request(cid);
         if (chapter) {
           if (
-            chapter.status() === ClockStatus.PAUSED &&
-            this.m_currentId?.toString() === cid.toString()
-          )
-            break;
-          if (chapter.status() === ClockStatus.RUNNING) {
-            if (this.m_currentId?.toString() === cid.toString()) {
-              this.pause();
-              break;
-            } else {
-              const current = await this.m_manager.request(
-                this.m_currentId || cid
-              );
-              if (current?.status() !== ClockStatus.STOPPED) this.play();
+            this.m_currentId?.toString() !== chapter.identifier().toString()
+          ) {
+            if (chapter.status() === ClockStatus.RUNNING) {
+              this.play();
               this.m_currentId = cid;
               this.pause();
+              await this.m_manager.dispatch(
+                { type: MessageClockData, handler: "event" },
+                this.identifier()
+              );
+              break;
             }
-          }
+          } else if (chapter.status() === ClockStatus.PAUSED) break;
         }
       }
     } else {
@@ -183,14 +178,6 @@ export class CurrentChapterClock implements IClockSource<unknown> {
     }
     void this.m_manager.dispatch(
       { type: MessageClockCurrent, handler: "event" },
-      this.identifier()
-    );
-    await this.m_manager.dispatch(
-      { type: MessageClockConfig, handler: "event" },
-      this.identifier()
-    );
-    await this.m_manager.dispatch(
-      { type: MessageClockData, handler: "event" },
       this.identifier()
     );
   }

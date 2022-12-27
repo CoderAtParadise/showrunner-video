@@ -22,11 +22,10 @@ import {
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
+import { Component, HTMLAttributes } from "react";
+import styles from "../styles/CurrentChapter.module.css";
 //@ts-ignore
 import { CurrentDurationComponent } from "@coderatparadise/showrunner-time/extension";
-import { Component, HTMLAttributes } from "react";
-
-import styles from "../styles/CurrentChapter.module.css";
 
 export class CurrentChapterComponent
   extends Component<
@@ -82,28 +81,28 @@ export class CurrentChapterComponent
           <span
             className={styles.position}
             style={{
-              left: `calc(${position < 0 ? 0 : position}% - 5px)`,
+              left: position < 0 ? 0 : `${position}%`,
             }}
           >
             <div className={styles.marker} />
             <CurrentDurationComponent
               clock={this}
               show="duration"
-              className={`${styles.markerTime}`}
+              className={styles.markerTime}
             />
           </span>
         </div>
         <CurrentDurationComponent
           clock={this}
           show="current"
-          className={`${this.props.className} ${styles.time}`}
+          className={styles.time}
         />
       </div>
     );
   }
 
   config(): BaseClockConfig & ChapterSettings {
-    return this.state.config || { name: "", time: new SMPTE() };
+    return this.state.config || { name: "", time: SMPTE.INVALID };
   }
 
   frameRate(): FrameRate {
@@ -133,7 +132,7 @@ export class CurrentChapterComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -148,7 +147,7 @@ export class CurrentChapterComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 

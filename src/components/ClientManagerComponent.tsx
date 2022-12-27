@@ -34,10 +34,10 @@ import {
   ClockDataCodec,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
+import styles from "../styles/Channel.module.css";
 import { ClientClockSourceComponent } from "./ClientClockSourceComponent";
 import { DisplayCurrentControlComponent } from "./DisplayCurrentControlComponent";
 
-import styles from "../styles/Channel.module.css";
 import { VerticalScrollable } from "./scrollable/VerticalScrollable";
 import { TallyComponent } from "./TallyComponent";
 import Image from "next/image";
@@ -75,8 +75,20 @@ export class ClientManagerComponent
           onData(videos: string[]) {
             const map: Map<ClockLookup, IClockSource<any> | undefined> =
               new Map<ClockLookup, IClockSource<any> | undefined>();
+            const current = self.list("current");
+            current.forEach((value: ClockLookup) => {
+              map.set(value, self.request(new ClockIdentifier(value)));
+            });
             videos.forEach((video: string) => {
               map.set(video as ClockLookup, undefined);
+            });
+            const chapters = self.list("chapter");
+            chapters.forEach((value: ClockLookup) => {
+              const chapter = self.request(new ClockIdentifier(value));
+              if (chapter) {
+                const owner = (chapter?.data() as { owner: string }).owner;
+                if (map.has(owner as ClockLookup)) map.set(value, chapter);
+              }
             });
             self.setState({ videos: map });
           },
@@ -157,7 +169,10 @@ export class ClientManagerComponent
               const identifier = new ClockIdentifier(id);
               return identifier.type() !== "current" ? (
                 <Fragment key={id}>
-                  <ClientClockSourceComponent clock={identifier} manager={this} />
+                  <ClientClockSourceComponent
+                    clock={identifier}
+                    manager={this}
+                  />
                   <p />
                 </Fragment>
               ) : null;
@@ -409,13 +424,11 @@ export class ClientManagerComponent
   state: {
     name: string;
     videos: Map<ClockLookup, IClockSource<any> | undefined>;
-    chapters: Map<ClockLookup, ClockIdentifier[]>;
     tally: { rehearsal: boolean; preview: boolean; program: boolean };
     lockTime: number;
   } = {
     name: "",
     videos: new Map<ClockLookup, IClockSource<any> | undefined>(),
-    chapters: new Map<ClockLookup, ClockIdentifier[]>(),
     tally: { rehearsal: true, preview: false, program: false },
     lockTime: 0,
   };

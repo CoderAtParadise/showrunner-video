@@ -25,8 +25,8 @@ export function extractMetadata(
   const [id, name, meta] = extractId(ampid);
   const [_stest, _in] = extractInMetadata(meta,manager);
   const [_etest, _out] = extractOutMetadata(meta,manager);
-  if (_etest) out = _out || new SMPTE();
-  if (_stest) cin = _in || new SMPTE();
+  if (_etest) out = _out || SMPTE.INVALID;
+  if (_stest) cin = _in || SMPTE.INVALID;
   return {
     id: id,
     name: name,

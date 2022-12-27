@@ -118,7 +118,7 @@ export class ClientClockSourceComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -133,7 +133,7 @@ export class ClientClockSourceComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
