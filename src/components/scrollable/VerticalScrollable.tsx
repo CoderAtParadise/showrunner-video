@@ -19,6 +19,7 @@ const SCROLL_BOX_MIN_HEIGHT = 5;
 export const VerticalScrollable = (props: {
   className?: string;
   children?: ReactNode;
+  activeIndex?: number | (() => number);
 }) => {
   const [hovering, setHovering] = useState(false);
   const [scrollBoxHeight, setScrollBoxHeight] = useState(SCROLL_BOX_MIN_HEIGHT);
@@ -119,6 +120,48 @@ export const VerticalScrollable = (props: {
       scrollHostElement?.removeEventListener("scroll", handleScroll, true);
     };
   }, [handleScroll, props.children, setScrollHeight]);
+
+  useEffect(() => {
+    if (props.activeIndex) {
+      const getActiveIndex = () => {
+        return typeof props.activeIndex === "function"
+          ? props.activeIndex()
+          : props.activeIndex
+          ? props.activeIndex
+          : 0;
+      };
+      if (!isDragging && !hovering) {
+        setTimeout(() => {
+          if (!scrollHostRef) return;
+          const scrollHostElement = scrollHostRef.current as HTMLDivElement;
+          const { scrollHeight, offsetHeight } = scrollHostElement;
+          const childElement = scrollHostElement.children[
+            getActiveIndex()
+          ] as HTMLDivElement;
+          console.log(getActiveIndex());
+          if (childElement) {
+            console.log(childElement);
+            const newTop = Math.min(
+              childElement.offsetTop,
+              scrollHeight - offsetHeight
+            );
+            if (newTop !== scrollBoxTop) {
+              setScrollBoxTop(newTop);
+              setScrollThumbPosition(newTop / offsetHeight);
+              scrollHostElement.scrollTop = newTop;
+            }
+          }
+        }, 500);
+      }
+    }
+  }, [
+    isDragging,
+    hovering,
+    props,
+    scrollBoxHeight,
+    lastScrollThumbPosition,
+    scrollBoxTop,
+  ]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleDocumentMouseMove);

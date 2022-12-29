@@ -36,7 +36,7 @@ import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
 import { ChapterComponent } from "./ChapterComponent";
 import { CurrentChapterComponent } from "./CurrentChapterComponent";
-import { HorizontalCarousel } from "./carousel/HorizontalCarousel";
+import { Scrollable } from "./scrollable/Scrollable";
 
 export class DisplayCurrentControlComponent
   extends Component<
@@ -304,7 +304,7 @@ export class DisplayCurrentControlComponent
           manager={this.m_manager}
           clock={new ClockIdentifier(this.identifier(), "chapter", "current")}
         />
-        <HorizontalCarousel
+        <Scrollable direction="horizontal"
           className={styles.chapters}
           activeIndex={this._getCurrentIndex.bind(this)}
         >
@@ -318,7 +318,7 @@ export class DisplayCurrentControlComponent
               />
             </Fragment>
           ))}
-        </HorizontalCarousel>
+        </Scrollable>
         {(() => {
           if (this.m_manager.tally().rehearsal) return this.rehearsal();
           if (this.m_manager.tally().program) return this.program();

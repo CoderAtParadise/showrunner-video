@@ -16,10 +16,10 @@ interface ScrollThumbCSSProperties extends CSSProperties {
 
 const SCROLL_BOX_MIN_WIDTH = 5;
 
-
 export const HorizontalScrollable = (props: {
   className?: string;
   children?: ReactNode;
+  activeIndex?: number | (() => number);
 }) => {
   const [hovering, setHovering] = useState(false);
   const [scrollBoxWidth, setScrollBoxWidth] = useState(SCROLL_BOX_MIN_WIDTH);
@@ -66,7 +66,7 @@ export const HorizontalScrollable = (props: {
         );
       }
     },
-    [isDragging,lastScrollThumbPosition, scrollBoxLeft, scrollBoxWidth]
+    [isDragging, lastScrollThumbPosition, scrollBoxLeft, scrollBoxWidth]
   );
 
   const shouldDisplayScroll = useCallback(() => {
@@ -87,17 +87,20 @@ export const HorizontalScrollable = (props: {
     },
     [shouldDisplayScroll]
   );
-  const handleScroll = useCallback((e) => {
-    if (!scrollHostRef) return;
-    const scrollHostElement = scrollHostRef.current as HTMLDivElement;
-    if (e.deltaY == 0) return;
-        e.preventDefault();
-        scrollHostElement.scrollBy({left:e.deltaY < 0? -20: 20});
-    const { scrollLeft, scrollWidth, offsetWidth } = scrollHostElement;
-    let newLeft = (scrollLeft / scrollWidth) * offsetWidth;
-    newLeft = Math.min(newLeft, offsetWidth - scrollBoxWidth);
-    setScrollBoxLeft(newLeft);
-  }, [scrollBoxWidth]);
+  const handleScroll = useCallback(
+    (e) => {
+      if (!scrollHostRef) return;
+      const scrollHostElement = scrollHostRef.current as HTMLDivElement;
+      if (e.deltaY == 0) return;
+      e.preventDefault();
+      scrollHostElement.scrollBy({ left: e.deltaY < 0 ? -20 : 20 });
+      const { scrollLeft, scrollWidth, offsetWidth } = scrollHostElement;
+      let newLeft = (scrollLeft / scrollWidth) * offsetWidth;
+      newLeft = Math.min(newLeft, offsetWidth - scrollBoxWidth);
+      setScrollBoxLeft(newLeft);
+    },
+    [scrollBoxWidth]
+  );
 
   const scrollHostRef = useRef<HTMLDivElement>(null);
   const setscrollWidth = useCallback(() => {
@@ -115,12 +118,56 @@ export const HorizontalScrollable = (props: {
     setscrollWidth();
     const scrollHostElement = scrollHostRef.current;
     window.addEventListener("resize", setscrollWidth, true);
-    scrollHostElement?.addEventListener("wheel", handleScroll, {capture:true,passive:false});
+    scrollHostElement?.addEventListener("wheel", handleScroll, {
+      capture: true,
+      passive: false,
+    });
     return () => {
       window.removeEventListener("resize", setscrollWidth, true);
       scrollHostElement?.removeEventListener("wheel", handleScroll, true);
     };
-  }, [handleScroll, props.children,setscrollWidth]);
+  }, [handleScroll, props.children, setscrollWidth]);
+
+  useEffect(() => {
+    if (props.activeIndex) {
+      const getActiveIndex = () => {
+        return typeof props.activeIndex === "function"
+          ? props.activeIndex()
+          : props.activeIndex
+          ? props.activeIndex
+          : 0;
+      };
+      if (!isDragging && !hovering) {
+        setTimeout(() => {
+          if (!scrollHostRef) return;
+          const scrollHostElement = scrollHostRef.current as HTMLDivElement;
+          if (scrollHostElement === null) return;
+          const { scrollWidth, offsetWidth } = scrollHostElement;
+          const childElement = scrollHostElement.children[
+            getActiveIndex()
+          ] as HTMLDivElement;
+          if (childElement) {
+            const newLeft = Math.min(
+              childElement.offsetLeft,
+              scrollWidth - offsetWidth
+            );
+            if (newLeft !== scrollBoxLeft) {
+              setScrollBoxLeft(newLeft);
+              setScrollThumbPosition(newLeft / offsetWidth);
+              scrollHostElement.scrollLeft = newLeft;
+            }
+          }
+        }, 500);
+      }
+    }
+  }, [
+    isDragging,
+    hovering,
+    props,
+    scrollBoxWidth,
+    lastScrollThumbPosition,
+    scrollBoxLeft,
+  ]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleDocumentMouseMove);

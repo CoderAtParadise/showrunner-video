@@ -37,10 +37,9 @@ import {
 import styles from "../styles/Channel.module.css";
 import { ClientClockSourceComponent } from "./ClientClockSourceComponent";
 import { DisplayCurrentControlComponent } from "./DisplayCurrentControlComponent";
-
-import { VerticalScrollable } from "./scrollable/VerticalScrollable";
 import { TallyComponent } from "./TallyComponent";
 import Image from "next/image";
+import { Scrollable } from "./scrollable/Scrollable";
 
 export interface ChapterSync {
   //eslint-disable-next-line
@@ -164,7 +163,11 @@ export class ClientManagerComponent
         <hr className={styles.hidden} />
         <div className={styles.videos}>
           <p />
-          <VerticalScrollable className={styles.scrollable}>
+          <Scrollable
+            direction="vertical"
+            className={styles.scrollable}
+            activeIndex={this._getCurrentIndex.bind(this)}
+          >
             {this.list("ampvideoctrl").map((id: ClockLookup) => {
               const identifier = new ClockIdentifier(id);
               return identifier.type() !== "current" ? (
@@ -177,7 +180,7 @@ export class ClientManagerComponent
                 </Fragment>
               ) : null;
             })}
-          </VerticalScrollable>
+          </Scrollable>
         </div>
         <div className={styles.remote}>
           <li className={styles.bullet}>
@@ -420,6 +423,21 @@ export class ClientManagerComponent
     dispatchInfo: DispatchInfo,
     f: (dispatchReturn: DispatchReturn) => void
   ): void {}
+
+  _getCurrentIndex(): number {
+    const current = this.request(
+      new ClockIdentifier(this.identifier(), "video", "current")
+    );
+    if (current) {
+      const currentId = (current.data() as { currentId: string }).currentId;
+      const index = this.list("ampvideoctrl").findIndex(
+        (value: ClockLookup) => value === currentId
+      );
+      console.log(index);
+      if (index !== -1) return index === 0 ? index : index * 2;
+    }
+    return 0;
+  }
 
   state: {
     name: string;
