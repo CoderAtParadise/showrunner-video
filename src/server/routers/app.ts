@@ -3,18 +3,12 @@ import { getManager } from "../channel/ManagerRegistry";
 import { videoRouter } from "./video";
 import { getClockRouter } from "./clock";
 import {
-  ClockLookup,
-  ClockIdentifier,
+  ManagerIdentifier,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
-//@ts-ignore
-import { ClockIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
 
-const clockRouter = getClockRouter(async (channel: ClockLookup) => {
-  const identifier = ClockIdentifierCodec.deserialize(
-    channel
-  ) as ClockIdentifier;
-  return await getManager(identifier.session);
+const clockRouter = getClockRouter(async (channel: ManagerIdentifier) => {
+  return await getManager(new ManagerIdentifier(channel));
 });
 
 export const appRouter = trpc.mergeRouters(clockRouter, videoRouter);

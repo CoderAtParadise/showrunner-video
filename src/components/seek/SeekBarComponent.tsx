@@ -44,14 +44,14 @@ export const SeekBarComponent = (props: {
   }, [props.clock, hoverTime, isHovering]);
 
   return (
-    <div className={`${props.className} ${styles.container}`}>
+    <div className={`${styles.container} ${props.className} `}>
       <CurrentDurationComponent
         clock={props.clock}
         show="current"
         className={`${styles.time}`}
       />
       <div
-        className={`${props.className} ${styles.progressContainer}`}
+        className={styles.progressContainer}
         onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
         onMouseMove={onMouseMove}
@@ -59,17 +59,17 @@ export const SeekBarComponent = (props: {
       >
         <div
           ref={hoverRef}
-          className={`${props.className} ${styles.progressEmpty}`}
+          className={styles.progressEmpty}
         >
           <div
-            className={`${styles.progressComplete}`}
+            className={styles.progressComplete}
             style={{ width: `${position}%` }}
           />
         </div>
         <span
           className={`${props.className} ${styles.position}`}
           style={{
-            left: `${seekPosition < 0 ? 0 : seekPosition + 5}px`,
+            left: `${seekPosition < 0 ? 0 : seekPosition - 8}px`,
           }}
           data-hovering={isHovering}
         >

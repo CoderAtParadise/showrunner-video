@@ -10,15 +10,19 @@ import {
   FrameRate,
   MessageClockCurrent,
   MessageClockConfig,
-  ClockLookup,
+  MessageClockPlay,
+  MessageClockPause,
+  MessageClockStop,
+  MessageClockUncue,
+  MessageClockCue,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import { VideoManager } from "../VideoManager.js";
 //@ts-ignore
 import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import { VideoCtrlData } from "../VideoCtrlData.js";
-//@ts-ignore
-import { ClockIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
+import { saveChapters } from "../ChapterLoader.js";
 
 export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
   constructor(
@@ -48,13 +52,11 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
   }
 
   identifier(): ClockIdentifier {
-    return {
-      service: "video",
-      show: "video",
-      session: this.m_manager.id(),
-      id: this.m_sourceId,
-      type: "ampvideoctrl",
-    };
+    return new ClockIdentifier(
+      this.m_manager.identifier(),
+      this.m_sourceId,
+      "ampvideoctrl"
+    );
   }
 
   status(): ClockStatus {
@@ -69,13 +71,16 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     const data: AmpVideoData = this.m_manager
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
-    return this.m_sourceId !== "" ? data.name : "Unknown Source";
+    return this.m_sourceId !== "" && data ? data.name : "Unknown Source";
   }
 
   current(): SMPTE {
     const current = this.m_manager.current();
-    if (current.id !== this.m_sourceId || this.m_status === ClockStatus.UNCUED)
-      return new SMPTE();
+    if (
+      current.id?.id() !== this.m_sourceId ||
+      this.m_status === ClockStatus.UNCUED
+    )
+      return SMPTE.INVALID;
     return current.time;
   }
 
@@ -84,7 +89,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
     if (data !== undefined) return data.out;
-    else return new SMPTE();
+    else return SMPTE.INVALID;
   }
 
   async cue(): Promise<boolean> {
@@ -97,7 +102,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       )
     ) {
       this.m_lockInput = true;
-      if (this.m_manager.current().id !== this.m_sourceId) {
+      if (
+        this.m_manager.current().id ||
+        this.m_manager.current().id?.id() !== this.m_sourceId
+      ) {
         const vdata = this.m_manager
           .cache()
           .get(this.m_sourceId) as AmpVideoData;
@@ -123,14 +131,20 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         }
       }
       this.m_status = ClockStatus.CUED;
-      this.m_manager.startUpdating(
-        ClockIdentifierCodec.serialize(this.identifier()) as ClockLookup,
-        this._update.bind(this)
-      );
+      this.m_manager.startUpdating(this.identifier(), this._update.bind(this));
       void this.m_manager.dispatch(
         { type: MessageClockCurrent, handler: "event" },
         this.identifier()
       );
+      void this.m_manager.dispatch(
+        { type: MessageClockCue, handler: "notify" },
+        this.identifier()
+      );
+      await (
+        await this.chapters()
+      ).forEach((chapter: ClockIdentifier) => {
+        this.m_manager.cue(chapter);
+      });
       this.m_lockInput = false;
       this.m_manager.cueLock(
         `${this.identifier().id}:${this.identifier().type}`,
@@ -146,14 +160,21 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       this.m_status !== ClockStatus.UNCUED &&
       this.m_status !== ClockStatus.INVALID
     ) {
-      this.m_manager.stopUpdating(
-        ClockIdentifierCodec.serialize(this.identifier()) as ClockLookup
-      );
+      this.m_manager.stopUpdating(this.identifier());
       this.m_status = ClockStatus.UNCUED;
       void this.m_manager.dispatch(
         { type: MessageClockCurrent, handler: "event" },
         this.identifier()
       );
+      void this.m_manager.dispatch(
+        { type: MessageClockUncue, handler: "notify" },
+        this.identifier()
+      );
+      await (
+        await this.chapters()
+      ).forEach((chapter: ClockIdentifier) => {
+        this.m_manager.uncue(chapter);
+      });
       this.m_lockInput = false;
       return await AsyncUtils.booleanReturn(true);
     }
@@ -168,9 +189,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       }
     }
     if (this.m_status !== ClockStatus.RUNNING) {
-      if (this.m_status === ClockStatus.STOPPED) {
-        void (await this.recue());
-      }
+      if (this.m_status === ClockStatus.STOPPED) void (await this.recue());
       const play = await this.m_manager.sendCommand(Command.Play, {
         byteCount: "0",
       });
@@ -178,6 +197,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         this.m_status = ClockStatus.RUNNING;
         void this.m_manager.dispatch(
           { type: MessageClockCurrent, handler: "event" },
+          this.identifier()
+        );
+        void this.m_manager.dispatch(
+          { type: MessageClockPlay, handler: "notify" },
           this.identifier()
         );
         return await AsyncUtils.booleanReturn(true);
@@ -195,6 +218,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
         this.m_status = this.m_lastRequest = ClockStatus.PAUSED;
         void this.m_manager.dispatch(
           { type: MessageClockCurrent, handler: "event" },
+          this.identifier()
+        );
+        void this.m_manager.dispatch(
+          { type: MessageClockPause, handler: "notify" },
           this.identifier()
         );
         return await AsyncUtils.booleanReturn(true);
@@ -219,6 +246,10 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
           { type: MessageClockCurrent, handler: "event" },
           this.identifier()
         );
+        void this.m_manager.dispatch(
+          { type: MessageClockStop, handler: "notify" },
+          this.identifier()
+        );
         return await AsyncUtils.booleanReturn(true);
       }
     }
@@ -237,7 +268,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
           data: { clipName: "Reset" },
         });
         if (reset.code === Return.ACK.code) {
-          this.m_manager.current().id = "";
+          this.m_manager.current().id = undefined;
           return await this.cue();
         }
       }
@@ -269,6 +300,59 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
     return await AsyncUtils.booleanReturn(false);
   }
 
+  async chapters(): Promise<ClockIdentifier[]> {
+    return await AsyncUtils.typeReturn<ClockIdentifier[]>(this.m_chapters);
+  }
+
+  async addChapter(
+    chapter: ClockIdentifier,
+    loading?: boolean
+  ): Promise<boolean> {
+    if (
+      !this.m_chapters.find(
+        (id: ClockIdentifier) => id.toString() === chapter.toString()
+      )
+    ) {
+      this.m_chapters.push(chapter);
+      this._sortChapters();
+      if (loading) await saveChapters(this, this.m_manager);
+      return await AsyncUtils.booleanReturn(true);
+    }
+    return await AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const index = this.m_chapters.findIndex(
+      (id: ClockIdentifier) => id.toString() === chapter.toString()
+    );
+    if (index !== -1) {
+      this.m_chapters.splice(index, 1);
+      this.m_manager.dispatch(
+        { type: MessageClockChapter, handler: "event" },
+        this.identifier()
+      );
+      return await AsyncUtils.booleanReturn(true);
+    }
+    return await AsyncUtils.booleanReturn(false);
+  }
+
+  _sortChapters(): void {
+    this.m_chapters.sort((a: ClockIdentifier, b: ClockIdentifier) => {
+      const asource = this.m_manager.request(a);
+      const bsource = this.m_manager.request(b);
+      if (asource && bsource) {
+        if (asource.duration().lessThan(bsource.duration(), true)) return -1;
+        if (asource.duration().equals(bsource.duration(), true)) return 0;
+        if (asource.duration().greaterThan(bsource.duration(), true)) return 1;
+      }
+      return -1;
+    });
+    this.m_manager.dispatch(
+      { type: MessageClockChapter, handler: "event" },
+      this.identifier()
+    );
+  }
+
   async updateConfig(
     newConfig: BaseClockConfig & VideoCtrlData
   ): Promise<void> {
@@ -290,7 +374,7 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
       .cache()
       .get(this.m_sourceId) as AmpVideoData;
     if (videoData !== undefined) {
-      if (this.m_manager.current().id !== this.m_sourceId) {
+      if (this.m_manager.current().id?.id() !== this.m_sourceId) {
         this.uncue();
         return;
       }
@@ -320,4 +404,5 @@ export class AmpVideoCtrlClock implements IClockSource<VideoCtrlData> {
   private m_manager: VideoManager;
   private m_sourceId: string;
   private m_status: ClockStatus = ClockStatus.UNCUED;
+  private m_chapters: ClockIdentifier[] = [];
 }

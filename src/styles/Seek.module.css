@@ -14,12 +14,13 @@
   height: 10px;
   width: 100%;
   position: relative;
+  margin:auto;
   margin-left: 0;
   margin-right: 0;
 }
 
 .progressContainer:hover {
-  cursor: pointer;
+  cursor: pointer; 
 }
 
 .progressEmpty,
@@ -30,7 +31,7 @@
 
 .progressEmpty {
   position: relative;
-  width: 90%;
+  width: 100%;
   background-color: #ffffff;
   overflow: hidden;
   margin: auto;

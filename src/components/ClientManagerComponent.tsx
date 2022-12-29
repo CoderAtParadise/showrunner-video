@@ -1,12 +1,15 @@
 import {
+  AsyncUtils,
   DispatchInfo,
   DispatchReturn,
   //@ts-ignore
 } from "@coderatparadise/showrunner-network";
 import {
+  ClockIdentifier,
   ClockLookup,
   IClockManager,
   IClockSource,
+  ManagerIdentifier,
   MessageClockCommand,
   MessageClockConfig,
   MessageClockCue,
@@ -18,6 +21,7 @@ import {
   MessageClockSetTime,
   MessageClockStop,
   MessageClockUncue,
+  MessageClockChapter,
   SMPTE,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
@@ -28,16 +32,19 @@ import {
   ClockConfigCodec,
   ClockCurrentStateCodec,
   ClockDataCodec,
-  ClockIdentifierCodec,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
+import styles from "../styles/Channel.module.css";
 import { ClientClockSourceComponent } from "./ClientClockSourceComponent";
 import { DisplayCurrentControlComponent } from "./DisplayCurrentControlComponent";
-
-import styles from "../styles/Channel.module.css";
-import { VerticalScrollable } from "./scrollable/VerticalScrollable";
 import { TallyComponent } from "./TallyComponent";
 import Image from "next/image";
+import { Scrollable } from "./scrollable/Scrollable";
+
+export interface ChapterSync {
+  //eslint-disable-next-line
+  _syncChapters: (chapters: string[]) => void;
+}
 
 export class ClientManagerComponent
   extends Component<{ id: string; children?: ReactElement }>
@@ -48,28 +55,46 @@ export class ClientManagerComponent
     this.m_id = props.id;
   }
 
+  identifier(): ManagerIdentifier {
+    return new ManagerIdentifier("video", "video", this.m_id);
+  }
+
   async componentDidMount(): Promise<void> {
     try {
       //@ts-ignore
-      const name: string = await trpcClient.managerName.query(this.m_id);
+      const name: string = await trpcClient.managerName.query(
+        this.identifier()
+      );
       this.setState({ name: name });
       const self = this;
       //@ts-ignore
       await trpcClient.list.subscribe(
-        { lookup: this.m_id, filter: "ampvideoctrl" },
+        { lookup: this.identifier(), filter: "ampvideoctrl" },
         {
           onData(videos: string[]) {
             const map: Map<ClockLookup, IClockSource<any> | undefined> =
               new Map<ClockLookup, IClockSource<any> | undefined>();
+            const current = self.list("current");
+            current.forEach((value: ClockLookup) => {
+              map.set(value, self.request(new ClockIdentifier(value)));
+            });
             videos.forEach((video: string) => {
               map.set(video as ClockLookup, undefined);
+            });
+            const chapters = self.list("chapter");
+            chapters.forEach((value: ClockLookup) => {
+              const chapter = self.request(new ClockIdentifier(value));
+              if (chapter) {
+                const owner = (chapter?.data() as { owner: string }).owner;
+                if (map.has(owner as ClockLookup)) map.set(value, chapter);
+              }
             });
             self.setState({ videos: map });
           },
         }
       );
       //@ts-ignore
-      trpcClient.tally.subscribe(this.m_id, {
+      trpcClient.tally.subscribe(this.identifier(), {
         onData(tally: {
           rehearsal: boolean;
           preview: boolean;
@@ -101,7 +126,7 @@ export class ClientManagerComponent
               onClick={() => {
                 //@ts-ignore
                 trpcClient.setRehearsalMode.mutate({
-                  identifier: this.id(),
+                  identifier: this.identifier(),
                   rehearsal: false,
                 });
               }}
@@ -116,7 +141,7 @@ export class ClientManagerComponent
               onClick={() => {
                 //@ts-ignore
                 trpcClient.setRehearsalMode.mutate({
-                  identifier: this.id(),
+                  identifier: this.identifier(),
                   rehearsal: true,
                 });
               }}
@@ -126,24 +151,36 @@ export class ClientManagerComponent
         <div className={styles.control}>
           <TallyComponent tally={this.tally()} name={this.name()} />
           <DisplayCurrentControlComponent
-            key={`video:video:${this.id()}:current:ampcurrentctrl`}
-            id={`video:video:${this.id()}:current:ampcurrentctrl`}
+            key={new ClockIdentifier(
+              this.identifier(),
+              "video",
+              "current"
+            ).toString()}
+            clock={new ClockIdentifier(this.identifier(), "video", "current")}
             manager={this}
           />
         </div>
         <hr className={styles.hidden} />
         <div className={styles.videos}>
           <p />
-          <VerticalScrollable className={styles.scrollable}>
-            {this.list().map((id: ClockLookup) =>
-              ClockIdentifierCodec.deserialize(id).type !== "ampcurrentctrl" ? (
+          <Scrollable
+            direction="vertical"
+            className={styles.scrollable}
+            activeIndex={this._getCurrentIndex.bind(this)}
+          >
+            {this.list("ampvideoctrl").map((id: ClockLookup) => {
+              const identifier = new ClockIdentifier(id);
+              return identifier.type() !== "current" ? (
                 <Fragment key={id}>
-                  <ClientClockSourceComponent id={id} manager={this} />
+                  <ClientClockSourceComponent
+                    clock={identifier}
+                    manager={this}
+                  />
                   <p />
                 </Fragment>
-              ) : null
-            )}
-          </VerticalScrollable>
+              ) : null;
+            })}
+          </Scrollable>
         </div>
         <div className={styles.remote}>
           <li className={styles.bullet}>
@@ -154,60 +191,92 @@ export class ClientManagerComponent
     );
   }
 
-  id(): string {
-    return this.m_id;
-  }
-
   name(): string {
     return this.state.name;
   }
   /* eslint-disable no-unused-vars */
-  cue(id: ClockLookup): Promise<boolean> {
+  cue(id: ClockIdentifier): Promise<boolean> {
     //@ts-ignore
     return trpcClient.cue.mutate(id);
   }
 
-  uncue(id: ClockLookup): Promise<boolean> {
+  uncue(id: ClockIdentifier): Promise<boolean> {
     //@ts-ignore
     return trpcClient.uncue.mutate(id);
   }
 
-  play(id: ClockLookup): Promise<boolean> {
+  play(id: ClockIdentifier): Promise<boolean> {
     //@ts-ignore
     return trpcClient.play.mutate(id);
   }
 
-  pause(id: ClockLookup, override: boolean): Promise<boolean> {
+  pause(id: ClockIdentifier, override: boolean): Promise<boolean> {
     //@ts-ignore
     return trpcClient.pause.mutate({ lookup: id, override });
   }
 
-  stop(id: ClockLookup, override: boolean): Promise<boolean> {
+  async stop(id: ClockIdentifier, override: boolean): Promise<boolean> {
     //@ts-ignore
-    return trpcClient.stop.mutate({ lookup: id, override });
+    return await trpcClient.stop.mutate({ lookup: id, override });
   }
 
-  recue(id: ClockLookup, override: boolean): Promise<boolean> {
+  async recue(id: ClockIdentifier, override: boolean): Promise<boolean> {
     //@ts-ignore
-    return trpcClient.recue.mutate({ lookup: id, override });
+    return await trpcClient.recue.mutate({ lookup: id, override });
   }
 
-  setTime(id: ClockLookup, time: SMPTE): Promise<boolean> {
+  async setTime(id: ClockIdentifier, time: SMPTE): Promise<boolean> {
     //@ts-ignore
-    return trpcClient.setTime.mutate({ lookup: id, time: time.toString() });
+    return await trpcClient.setTime.mutate({ lookup: id, time: time });
   }
 
-  request(id: ClockLookup): IClockSource<unknown> | undefined {
-    return this.state.videos.get(id);
+  async chapters(id: ClockIdentifier): Promise<ClockIdentifier[]> {
+    const clock = this.request(id);
+    if (clock) return await clock.chapters();
+    return AsyncUtils.typeReturn<ClockIdentifier[]>([]);
   }
 
-  list(): ClockLookup[] {
-    return Array.from(this.state.videos.keys());
+  async addChapter(
+    id: ClockIdentifier,
+    chapter: ClockIdentifier
+  ): Promise<boolean> {
+    //@ts-ignore
+    return await trpcClient.addChapter.mutate({ lookup: id, chapter: chapter });
   }
 
-  add(clock: IClockSource): boolean {
+  async removeChapter(
+    id: ClockIdentifier,
+    chapter: ClockIdentifier
+  ): Promise<boolean> {
+    //@ts-ignore
+    return await trpcClient.removeChapter.mutate({
+      lookup: id,
+      chapter: chapter,
+    });
+  }
+
+  _sortChapters(): void {
+    //NOOP
+  }
+
+  request(id: ClockIdentifier): IClockSource<unknown> | undefined {
+    return this.state.videos.get(id.toString());
+  }
+
+  list(filter: string | string[]): ClockLookup[] {
+    if (filter.length === 0) return Array.from(this.state.videos.keys());
+    return Array.from(this.state.videos.keys()).filter((key) => {
+      const type = new ClockIdentifier(key).type();
+      if (filter as string) return type === filter;
+      else if (filter as string[]) {
+        (filter as string[]).forEach((s) => type === s);
+      }
+    });
+  }
+
+  add(clock: IClockSource<any>): boolean {
     this.state.videos.set(
-      ClockIdentifierCodec.serialize(clock.identifier()) as ClockLookup,
+      clock.identifier().toString(),
       clock as ClientClockSourceComponent
     );
     this.setState({ videos: this.state.videos });
@@ -243,61 +312,60 @@ export class ClientManagerComponent
         case MessageClockCue:
           return {
             type: MessageClockCommand,
-            ret: this.cue(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup
-            ),
+            ret: this.cue(args[0]),
           };
         case MessageClockUncue:
           return {
             type: MessageClockCommand,
-            ret: this.uncue(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup
-            ),
+            ret: this.uncue(args[0]),
           };
         case MessageClockPlay:
           return {
             type: MessageClockCommand,
-            ret: this.play(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup
-            ),
+            ret: this.play(args[0]),
           };
         case MessageClockPause:
           return {
             type: MessageClockCommand,
-            ret: this.pause(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup,
-              args[1]
-            ),
+            ret: this.pause(args[0], args[1]),
           };
         case MessageClockStop:
           return {
             type: MessageClockCommand,
-            ret: this.stop(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup,
-              args[1]
-            ),
+            ret: this.stop(args[0], args[1]),
           };
         case MessageClockRecue:
           return {
             type: MessageClockCommand,
-            ret: this.recue(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup,
-              args[1]
-            ),
+            ret: this.recue(args[0], args[1]),
           };
         case MessageClockSetTime:
           return {
             type: MessageClockCommand,
-            ret: this.setTime(
-              ClockIdentifierCodec.serialize(args[0]) as ClockLookup,
-              args[1]
-            ),
+            ret: this.setTime(args[0], args[1]),
+          };
+        case MessageClockChapter:
+          return {
+            type: MessageClockChapter,
+            ret: (async () => {
+              const id = args[0];
+              const clock = await this.request(id);
+              if (clock) {
+                //@ts-ignore
+                await trpcClient.chapters.subscribe(id, {
+                  onData(data) {
+                    if ((clock as unknown as ChapterSync)._syncChapters)
+                      (clock as unknown as ChapterSync)._syncChapters(data);
+                  },
+                });
+              }
+            })(),
           };
         case MessageClockData:
           return {
             type: MessageClockData,
             ret: (async () => {
-              const id = ClockIdentifierCodec.serialize(args[0]) as ClockLookup;
+              const id = args[0];
               const clock = await this.request(id);
               if (clock) {
                 //@ts-ignore
@@ -313,7 +381,7 @@ export class ClientManagerComponent
           return {
             type: MessageClockCurrent,
             ret: (async () => {
-              const id = ClockIdentifierCodec.serialize(args[0]) as ClockLookup;
+              const id = args[0];
               const clock = await this.request(id);
               if (clock) {
                 //@ts-ignore
@@ -327,9 +395,9 @@ export class ClientManagerComponent
           };
         case MessageClockConfig:
           return {
-            type: MessageClockCurrent,
+            type: MessageClockConfig,
             ret: (async () => {
-              const id = ClockIdentifierCodec.serialize(args[0]) as ClockLookup;
+              const id = args[0];
               const clock = await this.request(id);
               if (clock) {
                 //@ts-ignore
@@ -355,6 +423,21 @@ export class ClientManagerComponent
     dispatchInfo: DispatchInfo,
     f: (dispatchReturn: DispatchReturn) => void
   ): void {}
+
+  _getCurrentIndex(): number {
+    const current = this.request(
+      new ClockIdentifier(this.identifier(), "video", "current")
+    );
+    if (current) {
+      const currentId = (current.data() as { currentId: string }).currentId;
+      const index = this.list("ampvideoctrl").findIndex(
+        (value: ClockLookup) => value === currentId
+      );
+      console.log(index);
+      if (index !== -1) return index === 0 ? index : index * 2;
+    }
+    return 0;
+  }
 
   state: {
     name: string;

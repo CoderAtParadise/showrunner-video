@@ -19,6 +19,7 @@ const SCROLL_BOX_MIN_HEIGHT = 5;
 export const VerticalScrollable = (props: {
   className?: string;
   children?: ReactNode;
+  activeIndex?: number | (() => number);
 }) => {
   const [hovering, setHovering] = useState(false);
   const [scrollBoxHeight, setScrollBoxHeight] = useState(SCROLL_BOX_MIN_HEIGHT);
@@ -121,6 +122,48 @@ export const VerticalScrollable = (props: {
   }, [handleScroll, props.children, setScrollHeight]);
 
   useEffect(() => {
+    if (props.activeIndex) {
+      const getActiveIndex = () => {
+        return typeof props.activeIndex === "function"
+          ? props.activeIndex()
+          : props.activeIndex
+          ? props.activeIndex
+          : 0;
+      };
+      if (!isDragging && !hovering) {
+        setTimeout(() => {
+          if (!scrollHostRef) return;
+          const scrollHostElement = scrollHostRef.current as HTMLDivElement;
+          const { scrollHeight, offsetHeight } = scrollHostElement;
+          const childElement = scrollHostElement.children[
+            getActiveIndex()
+          ] as HTMLDivElement;
+          console.log(getActiveIndex());
+          if (childElement) {
+            console.log(childElement);
+            const newTop = Math.min(
+              childElement.offsetTop,
+              scrollHeight - offsetHeight
+            );
+            if (newTop !== scrollBoxTop) {
+              setScrollBoxTop(newTop);
+              setScrollThumbPosition(newTop / offsetHeight);
+              scrollHostElement.scrollTop = newTop;
+            }
+          }
+        }, 500);
+      }
+    }
+  }, [
+    isDragging,
+    hovering,
+    props,
+    scrollBoxHeight,
+    lastScrollThumbPosition,
+    scrollBoxTop,
+  ]);
+
+  useEffect(() => {
     document.addEventListener("mousemove", handleDocumentMouseMove);
     document.addEventListener("mouseup", handleDocumentMouseUp);
     document.addEventListener("mouseleave", handleDocumentMouseUp);
@@ -142,17 +185,18 @@ export const VerticalScrollable = (props: {
     >
       <div
         ref={scrollHostRef}
-        className={`${styles.scrollHost} ${props.className}`}
+        data-type="vertical"
+        className={`${styles.scrollHost}`}
       >
         {props.children}
       </div>
       <div
-        className={`${props.className} ${styles.scrollbar}`}
+        className={styles.scrollbar}
         data-type="vertical"
         data-hovering={(hovering && shouldDisplayScroll()) || isDragging}
       >
         <div
-          className={`${styles.scrollThumb} ${props.className}`}
+          className={styles.scrollThumb}
           data-type={`vertical`}
           style={thumbStyle}
           onMouseDown={handleScrollThumbMouseDown}

@@ -1,0 +1,76 @@
+.progressContainer {
+  width: 7em;
+  height: 2em;
+  border: solid 2px;
+  border-color: #999999;
+  position: relative;
+}
+
+.progressContainer[data-active="true"] {
+  border-color: #fbb03b;
+}
+
+.progressComplete,
+.progressEmpty {
+  height: 100%;
+  max-width: 100%;
+}
+
+.progressEmpty {
+  position: relative;
+  width: 100%;
+  background-color: #000000;
+  text-align: left;
+  overflow: hidden;
+}
+
+.progressComplete {
+  position: absolute;
+  background-color: #636363;
+  text-align: left;
+  overflow: hidden;
+  top: 0;
+}
+
+.floating {
+  display: grid;
+  width: 7em;
+  height: 100%;
+  grid-auto-flow: column;
+  grid-column-gap: 5px;
+  grid-template-columns: 1fr 2fr;
+  align-items: center;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.index {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+  user-select: none;
+}
+
+.progressEmpty .index {
+  background-color: #636363;
+}
+
+.progressComplete .index {
+  background-color: #000000;
+}
+
+.time {
+  font-weight: bold;
+  line-height: 1em;
+  margin: 0;
+  width: 1.2em;
+  height: 1.2em;
+  user-select: none;
+}
+
+.active {
+  color: #fbb03b;
+}

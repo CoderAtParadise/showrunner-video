@@ -3,6 +3,8 @@ import { Component, ReactNode } from "react";
 
 import styles from "styles/Home.module.css";
 import { trpcClient } from "utils/trpc";
+//@ts-ignore
+import { ManagerIdentifier } from "@coderatparadise/showrunner-time";
 
 export class ManagerSelectorComponent extends Component {
   constructor(props: {}) {
@@ -30,7 +32,10 @@ export class ManagerSelectorComponent extends Component {
             <div>No loaded managers</div>
           ) : (
             this.state.managers?.map((v) => (
-              <Link href={`/channel/${v.id}`} key={v.id}>
+              <Link
+                href={`/channel/${new ManagerIdentifier(v.id).session()}`}
+                key={v.id}
+              >
                 {v.name}
               </Link>
             ))

@@ -2,7 +2,6 @@
 import { AsyncUtils } from "@coderatparadise/showrunner-network";
 import {
   BaseClockConfig,
-  ClockLookup,
   FrameRate,
   IClockSource,
   ClockIdentifier,
@@ -20,37 +19,49 @@ import {
   MessageClockData,
   MessageClockCurrent,
   MessageClockConfig,
+  MessageClockRemoveChapter,
+  MessageClockAddChapter,
+  MessageClockChapter,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time";
 import {
   AdditionalData,
-  ClockIdentifierCodec,
   CurrentClockState,
   //@ts-ignore
 } from "@coderatparadise/showrunner-time/codec";
-import { Component } from "react";
+import { Component, Fragment, HTMLAttributes } from "react";
 import styles from "../styles/DisplayCurrent.module.css";
 import Image from "next/image";
 import { SeekBarComponent } from "./seek/SeekBarComponent";
 import { ClientManagerComponent } from "./ClientManagerComponent";
+import { ChapterComponent } from "./ChapterComponent";
+import { CurrentChapterComponent } from "./CurrentChapterComponent";
+import { Scrollable } from "./scrollable/Scrollable";
 
 export class DisplayCurrentControlComponent
-  extends Component<{ id: ClockLookup; manager: ClientManagerComponent }>
+  extends Component<
+    HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: ClientManagerComponent;
+    }
+  >
   implements IClockSource<unknown>
 {
-  constructor(props: {
-    className?: string;
-    id: ClockLookup;
-    manager: ClientManagerComponent;
-  }) {
+  constructor(
+    props: HTMLAttributes<HTMLDivElement> & {
+      clock: ClockIdentifier;
+      manager: ClientManagerComponent;
+    }
+  ) {
     super(props);
-    this.m_id = props.id;
+    this.m_id = props.clock;
     this.m_manager = props.manager;
     this.state = {
       currentState: undefined,
       config: undefined,
       additional: undefined,
       scroll: false,
+      chapters: [],
     };
     this.m_manager.add(this);
   }
@@ -95,6 +106,7 @@ export class DisplayCurrentControlComponent
               alt="Recue"
               width={48}
               height={48}
+              priority
               style={{ transform: "scale(0.9,1.2)" }}
             />
           </div>
@@ -109,6 +121,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/play.svg"
                 alt="Play"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -125,6 +138,7 @@ export class DisplayCurrentControlComponent
             <Image
               src="/pause.svg"
               alt="Pause"
+              priority
               width={48}
               height={48}
               style={{ transform: "scale(0.9,1.2)" }}
@@ -138,7 +152,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.current()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .subtract(new SMPTE("00:00:15:00"), true)
@@ -149,6 +163,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/fast_rewind.svg"
                 alt="Fast Rewind"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -162,7 +177,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.current()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .add(new SMPTE("00:00:15:00"), true)
@@ -174,20 +189,12 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/fast_forward.svg"
                 alt="Fast Forward"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
               />
             </div>
-          </div>
-          <div className={styles.pause}>
-            <Image
-              src="/star.svg"
-              alt="Set Out"
-              width={48}
-              height={48}
-              style={{ transform: "scale(1.1)" }}
-            />
           </div>
           <div
             className={styles.arrowContainer}
@@ -195,7 +202,7 @@ export class DisplayCurrentControlComponent
               this.setTime(
                 this.duration()
                   .bound({
-                    lower: new SMPTE("00:00:00:00"),
+                    lower: SMPTE.ZERO,
                     upper: this.duration(),
                   })
                   .subtract(new SMPTE("00:00:20:00"), true)
@@ -207,6 +214,7 @@ export class DisplayCurrentControlComponent
               <Image
                 src="/skip_next.svg"
                 alt="Skip Next"
+                priority
                 width={48}
                 height={48}
                 style={{ transform: "scale(1.4)" }}
@@ -219,20 +227,21 @@ export class DisplayCurrentControlComponent
   }
 
   program() {
-        return (
-          <div className={styles.onaircontainer}>
-            <div className={styles.onair}>
-              <Image
-                src="/play.svg"
-                alt="Play"
-                width={48}
-                height={48}
-                style={{ transform: "scale(1.4)" }}
-              />
-              <p>ON AIR</p>
-            </div>
-          </div>
-        );
+    return (
+      <div className={styles.onaircontainer}>
+        <div className={styles.onair}>
+          <Image
+            src="/play.svg"
+            alt="Play"
+            priority
+            width={48}
+            height={48}
+            style={{ transform: "scale(1.4)" }}
+          />
+          <p>ON AIR</p>
+        </div>
+      </div>
+    );
   }
 
   preview() {
@@ -248,6 +257,7 @@ export class DisplayCurrentControlComponent
           <Image
             src="/skip_previous.svg"
             alt="Recue"
+            priority
             width={48}
             height={48}
             style={{ transform: "scale(0.9,1.2)" }}
@@ -264,6 +274,7 @@ export class DisplayCurrentControlComponent
             <Image
               src="/play.svg"
               alt="Play"
+              priority
               width={48}
               height={48}
               style={{ transform: "scale(1.4)" }}
@@ -287,6 +298,27 @@ export class DisplayCurrentControlComponent
           </span>
         </div>
         <SeekBarComponent className={styles.seek} clock={this} />
+        <CurrentChapterComponent
+          owner={this}
+          className={styles.currentchapter}
+          manager={this.m_manager}
+          clock={new ClockIdentifier(this.identifier(), "chapter", "current")}
+        />
+        <Scrollable direction="horizontal"
+          className={styles.chapters}
+          activeIndex={this._getCurrentIndex.bind(this)}
+        >
+          {this.state.chapters.map((value: ClockIdentifier, index: number) => (
+            <Fragment key={value.toString()}>
+              <ChapterComponent
+                className={styles.chapter}
+                clock={value}
+                index={index}
+                manager={this.m_manager}
+              />
+            </Fragment>
+          ))}
+        </Scrollable>
         {(() => {
           if (this.m_manager.tally().rehearsal) return this.rehearsal();
           if (this.m_manager.tally().program) return this.program();
@@ -305,7 +337,7 @@ export class DisplayCurrentControlComponent
   }
 
   identifier(): ClockIdentifier {
-    return ClockIdentifierCodec.deserialize(this.m_id);
+    return this.m_id;
   }
 
   status(): ClockStatus {
@@ -327,7 +359,7 @@ export class DisplayCurrentControlComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -342,7 +374,7 @@ export class DisplayCurrentControlComponent
         this.state.additional?.frameRate
       );
     } catch (e) {
-      return new SMPTE();
+      return SMPTE.INVALID;
     }
   }
 
@@ -431,6 +463,30 @@ export class DisplayCurrentControlComponent
     return await AsyncUtils.booleanReturn(false);
   }
 
+  async chapters(): Promise<ClockIdentifier[]> {
+    return await AsyncUtils.typeReturn<ClockIdentifier[]>(this.state.chapters);
+  }
+
+  async addChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const addChapter = await this.m_manager.dispatch(
+      { type: MessageClockAddChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (addChapter.ret as boolean) return addChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
+  }
+
+  async removeChapter(chapter: ClockIdentifier): Promise<boolean> {
+    const removeChapter = await this.m_manager.dispatch(
+      { type: MessageClockRemoveChapter, handler: "network" },
+      this.identifier(),
+      chapter
+    );
+    if (removeChapter.ret as boolean) return removeChapter.ret as boolean;
+    return AsyncUtils.booleanReturn(false);
+  }
+
   async updateConfig(
     settings: BaseClockConfig & unknown,
     local?: boolean
@@ -451,8 +507,19 @@ export class DisplayCurrentControlComponent
   }
 
   _syncData(data: AdditionalData): void {
-    data.data = JSON.parse(data.data as unknown as string);
     this.setState({ additional: data });
+  }
+
+  _syncChapters(chapters: string[]) {
+    const identifiers: ClockIdentifier[] = [];
+    chapters.forEach((chapter: string) =>
+      identifiers.push(new ClockIdentifier(chapter))
+    );
+    this.setState({ chapters: identifiers });
+  }
+
+  _sortChapters(): void {
+    // NOOP
   }
 
   async _update(): Promise<void> {
@@ -468,15 +535,36 @@ export class DisplayCurrentControlComponent
       { type: MessageClockConfig, handler: "network" },
       this.identifier()
     );
+    await this.m_manager.dispatch(
+      { type: MessageClockChapter, handler: "network" },
+      this.identifier()
+    );
     return await AsyncUtils.voidReturn();
   }
 
-  private m_id: ClockLookup;
+  _getCurrentIndex() {
+    if (this.m_manager) {
+      const current = this.m_manager.request(
+        new ClockIdentifier(this.identifier(), "chapter", "current")
+      );
+      if (current) {
+        const currentId = (current.data() as { currentId: string }).currentId;
+        const index = this.state.chapters.findIndex(
+          (value: ClockIdentifier) => value.toString() === currentId
+        );
+        if (index !== -1) return index;
+      }
+    }
+    return 0;
+  }
+
+  private m_id: ClockIdentifier;
   private m_manager: ClientManagerComponent;
   state: {
     currentState: CurrentClockState | undefined;
     config: (BaseClockConfig & unknown) | undefined;
     additional: AdditionalData | undefined;
     scroll: boolean;
+    chapters: ClockIdentifier[];
   };
 }

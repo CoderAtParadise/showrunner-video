@@ -7,6 +7,7 @@ import {
 } from "@coderatparadise/amp-grassvalley";
 import { VideoManager } from "../VideoManager.js";
 import {
+  ChapterClock,
   ClockDirection,
   ClockStatus,
   SMPTE,
@@ -16,12 +17,14 @@ import {
   Service,
   AsyncUtils,
   ServiceIdentifier,
+  NetworkConnection,
   //@ts-ignore
 } from "@coderatparadise/showrunner-network";
 import { AmpMetadata, extractId, extractMetadata } from "./AmpVideoMetadata";
-import { AmpCurrentCtrlClock } from "./AmpCurrentCtrlClock";
 import { AmpVideoCtrlClock } from "./AmpVideoCtrlClock";
-import { AmpConnection } from "./AmpConnection.js";
+//@ts-ignore
+import { ManagerIdentifierCodec } from "@coderatparadise/showrunner-time/codec";
+import { loadChapters, saveChapters } from "../ChapterLoader.js";
 
 export type AmpVideoData = {
   id: string;
@@ -33,6 +36,10 @@ export type AmpVideoData = {
   metadata: AmpMetadata;
 };
 
+export type AmpConnection = NetworkConnection & {
+  channel: string;
+};
+
 export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   constructor(
     id: string,
@@ -42,7 +49,6 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     this.m_id = id;
     this.m_manager = manager;
     this.m_connectionInfo = connectionInfo;
-    this.m_manager.add(new AmpCurrentCtrlClock(this.m_manager));
     this.m_source = new AmpChannel(
       this.m_connectionInfo.address,
       this.m_connectionInfo.port,
@@ -59,9 +65,12 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     };
   }
 
-  async open(retryHandler: () => Promise<boolean>): Promise<boolean> {
+  async open(
+    //eslint-disable-next-line no-unused-vars
+    retryHandler: (tryCounter: number) => Promise<boolean>
+  ): Promise<boolean> {
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     const open = await this.m_source.open(retryHandler);
     if (open) this.update();
     return open;
@@ -74,14 +83,14 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
   async close(): Promise<boolean> {
     this.m_source?.close(false);
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     return await AsyncUtils.booleanReturn(true);
   }
 
   async restart(): Promise<boolean> {
     this.m_source?.close(true);
     this.m_videoCache.clear();
-    this.m_current = { id: "", time: new SMPTE(), raw: "" };
+    this.m_current = { id: "", time: SMPTE.INVALID, raw: "" };
     return await AsyncUtils.booleanReturn(false);
   }
 
@@ -131,11 +140,14 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
         if (!vdata) return;
         vdata.status = ClockStatus.CUED;
         this.m_current.id = currentId;
+        clearTimeout(this.m_resetTimeout);
+        this.m_resetTimeout = undefined;
       }
       const rawTimecode = (cTime.data as { timecode: string }).timecode;
       let currentTime: SMPTE = new SMPTE(0, this.m_manager.frameRate());
       try {
         currentTime = new SMPTE(rawTimecode, this.m_manager.frameRate());
+        if (currentTime.frameCount() === -1) return;
       } catch (err) {
         const date = new Date();
         const time =
@@ -172,9 +184,13 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
         this.m_current.raw = rawTimecode;
       }
     } else {
-      this.m_current.id = "";
-      this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
-      this.m_current.raw = "";
+      if (this.m_resetTimeout !== undefined) {
+        this.m_resetTimeout = setTimeout(() => {
+          this.m_current.id = "";
+          this.m_current.time = new SMPTE(0, this.m_manager.frameRate());
+          this.m_current.raw = "";
+        }, 8);
+      }
     }
     return await AsyncUtils.voidReturn();
   }
@@ -203,7 +219,7 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             (cDuration.data as { timecode: string }).timecode
           );
       }
-      return await AsyncUtils.typeReturn("00:00:00:00");
+      return await AsyncUtils.typeReturn(SMPTE.ZERO.toString());
     };
     if (
       returnCodeMatches(Return.IDListing, cFirstId.code, { byteCount: ["A"] })
@@ -234,7 +250,11 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             if (now > i.time + 1000) {
               this.m_videoCache.delete(i.id);
               this.m_manager.remove(
-                `video:video:${this.m_manager.id()}:${i.id}:ampvideoctrl`
+                `${
+                  ManagerIdentifierCodec.serialize(
+                    this.m_manager.identifier()
+                  ) as `${string}:${string}:${string}`
+                }:${i.id}:ampvideoctrl`
               );
               this.m_cuedRemove.splice(
                 this.m_cuedRemove.findIndex((k) => (k.id = key.id)),
@@ -268,24 +288,36 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
             //Skip the rest of the function as we shoulnd' make any changes if the timecode is invalid
             return;
           }
-          const meta = extractMetadata(id, duration!);
+          const meta = extractMetadata(id, duration!, this.m_manager);
           if (!this.m_videoCache.has(meta.id)) {
             this.m_videoCache.set(meta.id, {
               ...meta,
               incorrectFramerate: duration!.hasIncorrectFrameRate(),
               status: ClockStatus.UNCUED,
             });
-            this.m_manager.add(
-              new AmpVideoCtrlClock(
-                {
-                  name: "",
-                  direction: ClockDirection.COUNTDOWN,
-                  playOnCue: false,
-                },
-                this.m_manager,
-                meta.id
-              )
+            const clock = new AmpVideoCtrlClock(
+              {
+                name: "",
+                direction: ClockDirection.COUNTDOWN,
+                playOnCue: false,
+              },
+              this.m_manager,
+              meta.id
             );
+            if (!(await loadChapters(clock, this.m_manager))) {
+              const defaultChapter = new ChapterClock(
+                this.m_manager,
+                clock.identifier(),
+                {
+                  name: "End",
+                  time: clock.duration(),
+                }
+              );
+              this.m_manager.add(defaultChapter);
+              clock.addChapter(defaultChapter.identifier());
+              saveChapters(clock, this.m_manager);
+            }
+            this.m_manager.add(clock);
           }
         }
       }
@@ -297,19 +329,22 @@ export class AmpChannelService implements Service<AmpChannel, AmpConnection> {
     setInterval(() => {
       if (this.isOpen()) void this.pollVideoData();
     }, 1000);
-    setInterval(() => {
-      if (this.isOpen()) void this.pollCurrentInfo();
-    }, 1000 / this.m_manager.frameRate());
+    setInterval(async () => {
+      if (this.isOpen() && this.m_previousFrameComplete) {
+        void (await this.pollCurrentInfo());
+      }
+    }, (1000 / this.m_manager.frameRate()) * 2);
   }
 
+  private m_previousFrameComplete: boolean = true;
   private m_id: string;
-  tryCounter: number = 0;
   private m_connectionInfo: AmpConnection;
   private m_source: AmpChannel;
   private m_cuedRemove: { id: string; time: number }[] = [];
+  private m_resetTimeout: any | undefined = undefined;
   private m_current: { id: string; time: SMPTE; raw: string } = {
     id: "",
-    time: new SMPTE(),
+    time: SMPTE.INVALID,
     raw: "",
   };
 
